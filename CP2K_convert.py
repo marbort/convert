@@ -154,6 +154,8 @@ def savenpy(kind,val,traj_energy,types_map,types,dir,set,box):
         box=box_0*len(traj_energy)
         np.save(dir+set+"{}".format("box"),box)
     else:
+        if not box:
+            print("Box not defined. May cause error in data conversion")
         np.save(dir+set+"{}".format("box"),box)
 
     with open(dir+"type_map.raw",'w') as ofile:
