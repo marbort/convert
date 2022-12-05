@@ -21,9 +21,9 @@ def extract_cp2k_coords(file,kind):
     numbers=[]
     natom=0
     box_0=[[20.080, 0., 0., 0. ,20.080, 0., 0., 0., 20.080]]
-    with open("/run/media/marco/SAMSUNG/SHARED/SHARED_bkup/dottorato/scripts/PeriodicTableJSON.json",'r') as jfile:
-        jsonf=json.load(jfile)
-        atoms_dict={x['symbol']:x['number'] for x in jsonf['elements']}
+    #with open("/run/media/marco/SAMSUNG/SHARED/SHARED_bkup/dottorato/scripts/PeriodicTableJSON.json",'r') as jfile:
+        #jsonf=json.load(jfile)
+        #atoms_dict={x['symbol']:x['number'] for x in jsonf['elements']}
 
 
     box=np.array(box_0) #fixed box params taken from input
@@ -64,7 +64,7 @@ def extract_cp2k_coords(file,kind):
             index=index+1
     for i in atoms:
             types.append(types_map[i])
-            numbers.append(atoms_dict[i]) 
+            #numbers.append(atoms_dict[i]) 
     
     return(numbers,time,val,val_sch,traj_ener,types,types_map,nframes,natom)
 
@@ -165,10 +165,13 @@ def savenpy(kind,val,traj_energy,types_map,types,dir,set,box):
     with open(dir+"type.raw",'w') as ofile:
         for i in types:
             ofile.write(str(i)+"\n")
-def savenpy_frcs(val,dir,set):
 
+def savenpy_frcs(val,dir,set):
     np.save(dir+set+"force",val)
-    
+
+def savefake_frcs(natoms,lgth,dir,set):
+    val=np.zeros((lgth,natoms*3))
+    np.save(dir+set+"force",val)
     
    
 
@@ -227,5 +230,8 @@ savenpy(kind,crds_traj,traj_energy_traj,types_map,types,dir,set,box_traj)
 
 if frcs_found:
     savenpy_frcs(frc_traj,dir,set)
+else:
+    print("No Forces Found. Creating fake array")
+    savefake_frcs(len(types),len(crds_traj),dir,set)
 
 

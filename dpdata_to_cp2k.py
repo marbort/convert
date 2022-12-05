@@ -8,20 +8,22 @@ boxl=["A","B","C"]
 name="THF_iPrMgCl_CP2K"
 data=dpdata.LabeledSystem('./dpdata','deepmd/npy')
 
-
+parser = argparse.ArgumentParser(description='Plot data')
+parser.add_argument('--offset', dest='offset', default=1, type=int, help='save only every nth frame')
+args = parser.parse_args()
 
 with open('cp2k_template.tmpl','r') as ifile:
     lines=ifile.read()
     
-    for i,number in enumerate(data['coords']):
+    for i in range(0,len(data['coords']),args.offset):
         print(i)
         crds=[]
-        for j,item in enumerate(number):
+        for j,item in enumerate(data['coords'][i]):
                 X=item[0]
                 Y=item[1]
                 Z=item[2]
-                crds.append(data['atom_names'][data['atom_types'][j]]+\
-                    "\t{:8.5f}\t{:8.5f}\t{:8.5f}".format(X,Y,Z))
+                crds.append("       "+data['atom_names'][data['atom_types'][j]]+\
+                    "   {:13.9f}   {:13.9f}   {:13.9f}".format(X,Y,Z))
                 join='\n'.join(crds)
         struct=lines.replace("##coord##",join)
         box=[]
@@ -29,17 +31,17 @@ with open('cp2k_template.tmpl','r') as ifile:
             X=entry[0]
             Y=entry[1]
             Z=entry[2]
-            box.append(boxl[k]+"\t{:8.5f}\t{:8.5f}\t{:8.5f}".format(X,Y,Z))
+            box.append("       " + boxl[k]+"   {:13.9f}   {:13.9f}   {:13.9f}".format(X,Y,Z))
             bjoin='\n'.join(box)
         struct=struct.replace("##cell##",bjoin)
-        struct=struct.replace("##project##","{}_{}".format(name,i))
+        struct=struct.replace("##project##","{}_{:05d}".format(name,i))
 
         if os.path.isdir("inputs"):
             print("Creating input for frame {}".format(i))
         else:
             os.mkdir("inputs")
             print("Creating input for frame {}".format(i))
-        with open('inputs/cp2k_{}_{}.cinp'.format(name,i),'w') as ofile:
+        with open('inputs/cp2k_{}_{:05d}.cinp'.format(name,i),'w') as ofile:
             ofile.write(struct)
         
 
