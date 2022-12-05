@@ -10,6 +10,7 @@ data=dpdata.LabeledSystem('./dpdata','deepmd/npy')
 
 parser = argparse.ArgumentParser(description='Plot data')
 parser.add_argument('--offset', dest='offset', default=1, type=int, help='save only every nth frame')
+parser.add_argument('--name', dest='name', default=1, type=int, help='Project name')
 args = parser.parse_args()
 
 with open('cp2k_template.tmpl','r') as ifile:
@@ -34,14 +35,14 @@ with open('cp2k_template.tmpl','r') as ifile:
             box.append("       " + boxl[k]+"   {:13.9f}   {:13.9f}   {:13.9f}".format(X,Y,Z))
             bjoin='\n'.join(box)
         struct=struct.replace("##cell##",bjoin)
-        struct=struct.replace("##project##","{}_{:05d}".format(name,i))
+        struct=struct.replace("##project##","{}_{:05d}".format(args.name,i))
 
         if os.path.isdir("inputs"):
             print("Creating input for frame {}".format(i))
         else:
             os.mkdir("inputs")
             print("Creating input for frame {}".format(i))
-        with open('inputs/cp2k_{}_{:05d}.cinp'.format(name,i),'w') as ofile:
+        with open('inputs/cp2k_{}_{:05d}.cinp'.format(args.name,i),'w') as ofile:
             ofile.write(struct)
         
 
