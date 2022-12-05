@@ -1,7 +1,7 @@
 # convert
 Scripts to convert from CP2K to dpdata and vice-versa
 
-##CP2K_convert
+## CP2K_convert
 
 Converts a CP2K files to dpdata format. In line arguments:
 
