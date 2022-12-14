@@ -11,7 +11,7 @@ parser.add_argument('--feval', dest='feval', action='store_true', help='Extract 
 parser.add_argument('--box', dest='box', type=float, help='XYZ Box Sizes (orthrombic only)',nargs=3)
 args = parser.parse_args()
 
-
+hartree_to_ev=27.211399
 #print(re.search(r'(?<=Element).*?(?=SUM OF)',lines,re.DOTALL)[0])
 
 def extract_cp2k_coords(file,kind):
@@ -36,7 +36,7 @@ def extract_cp2k_coords(file,kind):
     nframes=len(lines)//(natom+2)
     print("Found {:d} frames".format(nframes))
     print("Extracting {:d} frames".format(nframes//args.offset))
-    traj_ener=[np.append(traj_ener,float(lines[args.offset*k*(natom+2)+1].split()[8].rstrip())) \
+    traj_ener=[np.append(traj_ener,float(lines[args.offset*k*(natom+2)+1].split()[8].rstrip())*hartree_to_ev) \
         for k in range(nframes//args.offset)]
         
 
@@ -125,7 +125,7 @@ def feval(file):
                     lines2=frcfile.readlines()
                     for j,line in enumerate(lines2):
                         if "Total FORCE_EVAL" in line:
-                            nrg=float(line.split()[-1])
+                            nrg=float(line.split()[-1])*hartree_to_ev
                         if "ATOMIC FORCES in" in line:
                             frc=[float(lines2[k+3].split()[i])*uconv for k in range(j,j+len(crds)//3) for i in range(3,6) ]
                             types=[int(lines2[k+3].split()[1])-1 for k in range(j,j+len(crds)//3)]
