@@ -14,6 +14,8 @@ args = parser.parse_args()
 hartree_to_ev=27.211399
 #print(re.search(r'(?<=Element).*?(?=SUM OF)',lines,re.DOTALL)[0])
 
+#This functions extracts coordinates and atom types from a CP2K trajectory 
+# positions xyz file 
 def extract_cp2k_coords(file,kind):
     traj_ener=np.empty(0)
     types_map={}
@@ -68,6 +70,8 @@ def extract_cp2k_coords(file,kind):
     
     return(numbers,time,val,val_sch,traj_ener,types,types_map,nframes,natom)
 
+
+#This functions extracts forces from a CP2K trajectory forces xyz file 
 def extract_cp2k_frc(file,time,natom):
     uconv=51.42208619083232  #from Ha/Bohr to eV/Å
     print(time[0])
@@ -89,8 +93,11 @@ def extract_cp2k_frc(file,time,natom):
         
     return(frc,frc_sch)
 
+#This functions takes a CP2K input file and a CP2K output file of
+#a single point force evaluation run and extracts coordinates, forces 
+#and box informations
 def feval(file):
-        with open(file,'r') as ifile:
+         with open(file,'r') as ifile:
             lines=ifile.readlines()
             start=False
             startb=False
@@ -99,6 +106,7 @@ def feval(file):
             types_map=[]
          
             for line in lines:
+                #Extract coordinates from CP2K files 
                 if "&END COORD" in line:
                     start=False
                     #print(line)
@@ -110,9 +118,9 @@ def feval(file):
                 if "&COORD" in line:
                     start=True
                 
+                #Extract Box from CP2K input                
                 if "&END CELL" in line:
-                    startb=False
-                    
+                    startb=False                    
                 if startb:
                     tmp=[float(line.split()[x]) for x in range(1,4)]
                     box=box+tmp
@@ -124,8 +132,10 @@ def feval(file):
                 with open(frcname,'r') as frcfile:
                     lines2=frcfile.readlines()
                     for j,line in enumerate(lines2):
+                        #Extract Energy from CP2K output and convert it to eV
                         if "Total FORCE_EVAL" in line:
                             nrg=float(line.split()[-1])*hartree_to_ev
+                        #Extract Forces from CP2K output file and convert it to dpdata units
                         if "ATOMIC FORCES in" in line:
                             frc=[float(lines2[k+3].split()[i])*uconv for k in range(j,j+len(crds)//3) for i in range(3,6) ]
                             types=[int(lines2[k+3].split()[1])-1 for k in range(j,j+len(crds)//3)]
