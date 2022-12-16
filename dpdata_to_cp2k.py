@@ -8,6 +8,7 @@ boxl=["A","B","C"]
 name="THF_iPrMgCl_CP2K"
 data=dpdata.LabeledSystem('./dpdata','deepmd/npy')
 
+
 parser = argparse.ArgumentParser(description='Plot data')
 parser.add_argument('--offset', dest='offset', default=1, type=int, help='save only every nth frame')
 parser.add_argument('--name', dest='name', default=1, type=str, help='Project name')
@@ -38,7 +39,7 @@ with open(args.template,'r') as ifile:
             box.append("       " + boxl[k]+"   {:13.9f}   {:13.9f}   {:13.9f}".format(X,Y,Z))
             bjoin='\n'.join(box)
         struct=struct.replace("##cell##",bjoin)
-        struct=struct.replace("##project##","{}_{:05d}".format(args.name,i))
+        struct=struct.replace("##project##","{}_{:06d}".format(args.name,i))
 
         if os.path.isdir("inputs"):
             print("Creating input for frame {}".format(i))
