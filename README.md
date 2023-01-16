@@ -28,7 +28,7 @@ Converts a deepmd formatted data into multiple CP2K inputs. In line arguments:
 
 `--offset`  only extracts every nth frame
 
-The script needs a template CP2K input file named `cp2k_template.tmpl` in which the project name (GLOBAL/PROJECT) the coordinates (FORCE_EVAL/SUBSYS/COORD) and the cell dimensions (GLOBAL/PROJECT/CELL)  are substituted by _##project##_, _##coord##_ and _##cell##_.
+The script needs a template CP2K input file named `cp2k_template.inp` in which the project name (GLOBAL/PROJECT) the coordinates (FORCE_EVAL/SUBSYS/COORD) and the cell dimensions (GLOBAL/PROJECT/CELL)  are substituted by _##project##_, _##coord##_ and _##cell##_.
 
 
 
