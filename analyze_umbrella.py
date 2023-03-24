@@ -870,7 +870,7 @@ for j in pairsCl:
         for k,i in enumerate(RDFS['Cl']):
                 Coord=True
                 try:
-                        y_min=find_peaks([-x for x in RDFS['Cl'][i][j]],width=1)
+                        y_min=find_peaks([-x for x in RDFS['Cl'][i][j]],width=2)
                         x_min=RDFS['dist'][y_min[0][0]]
                 except:
                         Coord=False
@@ -898,7 +898,7 @@ for k in RDFS:
                         CN[k][i]={}
                         for j in RDFS[k][i]:
                                 try:
-                                        y_min=find_peaks([-x for x in RDFS[k][i][j]],width=1)
+                                        y_min=find_peaks([-x for x in RDFS[k][i][j]],width=2)
                                         x_min=RDFS['dist'][y_min[0][0]]
                                         CN[k][i][j]=COORD[k][i][j][RDFS['dist'].index(x_min)]
                                 except:
@@ -925,7 +925,7 @@ axis=["X","Y","Z"]
 fig=plt.figure(figsize=(10,10),dpi=150)
 
 for i in range(3):
-        plt.subplot(5,1,i+1)
+        plt.subplot(7,1,i+1)
         plt.errorbar(posz_all,[x[i] for x in ang_avg],[x[i] for x in std_ang_avg],linestyle=None)
         plt.plot(posz_all,[x[i] for x in ang_avg])
         plt.axvline(x=10.6, color = '#989898')
@@ -934,10 +934,13 @@ for i in range(3):
         plt.ylim(limy_all)
         plt.xlim(limx_all)
         plt.ylabel("{} Angle / deg".format(axis[i]))
-plt.subplot(5,1,4)
+#%%
+plt.subplot(7,1,4)
+
+plt.subplot(7,1,6)
 plt.plot(data[0][0],data[0][1])
 plt.xlim(limx_all)
-plt.subplot(5,1,5)
+plt.subplot(7,1,7)
 plt.plot(GCL_dens_res.results.z.hist_bin_edges[:-1]/10 ,GCL_dens_res.results.z.mass_density)
 plt.plot(CHL_dens_res.results.z.hist_bin_edges[:-1]/10 ,CHL_dens_res.results.z.mass_density)
 plt.plot(THF_dens_res.results.z.hist_bin_edges[:-1]/10 ,THF_dens_res.results.z.mass_density)

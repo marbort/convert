@@ -12,6 +12,36 @@ import glob
 from itertools import combinations
 import regex as re
 #%%
+def set_size(width_pt, fraction=1, subplots=(1, 1)):
+    """Set figure dimensions to sit nicely in our document.
+
+    Parameters
+    ----------
+    width_pt: float
+            Document width in points
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+    subplots: array-like, optional
+            The number of rows and columns of subplots.
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    # Width of figure (in pts)
+    fig_width_pt = width_pt * fraction
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    golden_ratio = (5**.7 - 1) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+    # Figure height in inches
+    fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
+
+    return (fig_width_in, fig_height_in)
 def coord_Number(x,y,dist_min,dist_max,mols):
     val_x=[k for k in x if dist_min<= k <=dist_max]
     val_x_sq=[k**2 for k in val_x]
@@ -137,15 +167,16 @@ def plot_RDF_MDanal(RDF,r,nmols):
     
     
 
-
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/"
+#%%
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
 #%%
 coms=glob.glob(root+"*_com.xvg")
-hbonds=glob.glob(root+"*hbond*")
+hbonds=glob.glob(os.path.join(root,"*hbond*"))
 #paths=glob.glob(root+"Iteration*/*/*.dcd")
 #print(paths)
 chars=["#","@"]
 coms_dict={}
+#%%
 # Load the LAMMPS trajectory
 #for i in paths:
 u = mda.Universe(root+"DES_BIG_MOD.parm7",root+"npt_iso_1-3.xtc")
@@ -181,24 +212,65 @@ DES = u.select_atoms('resname CHL GCL Clm')
 
 
 #%% MSD
-
-with open(root+'D_2-3.xvg','r') as ifile:
+outfile='dlogmsd_330k.dat'
+temp="330K"
+with open(root+'/msd.xvg','r') as ifile:
     lines=ifile.readlines()
 mols=[]
 MSD={}
 for line in lines:
-    if re.findall('s[0-9]+',line):
+    if re.findall('@ s[0-9]+',line):
+        print(line)
         mols.append(line.split()[4].rstrip(']'))
 for i,x in enumerate(mols):
     MSD[x]={'t':[float(k.split()[0]) for k in lines if "#" not in k if "@" not in k],'msd':[float(k.split()[i+1]) for k in lines if "#" not in k if "@" not in k],
-            'logt':[np.log10(float(k.split()[0])) for k in lines if "#" not in k if "@" not in k],'logmsd':[np.log10(float(k.split()[i+1])) for k in lines if "#" not in k if "@" not in k]}
+           'logt':[np.log10(float(k.split()[0])) for k in lines if "#" not in k if "@" not in k],'logmsd':[np.log10(float(k.split()[i+1])) for k in lines if "#" not in k if "@" not in k]}
+with open(os.path.join(root,outfile),'w') as ofile:
+    grads={}
+    for x in MSD:
+        grads[x]=np.gradient(MSD[x]['logmsd'],MSD[x]['logt'])
+        ofile.write("{:s} dlog10{:s}/dlog10t".format("Time/ps",x))
+    ofile.write("\n")
+    for i,x in enumerate(MSD[list(MSD.keys())[0]]['t']):
+        for y in MSD:
+            ofile.write("{:8.1f} {:8.6f} {:8s}".format(MSD[y]['t'][i],grads[y][i],""))
+        ofile.write("\n")
+
+fig=plt.figure(dpi=150)
+
 for x in MSD:
+    grads_pruned=grads[x][~np.isnan(grads[x])]
+    diff=[abs(y-1) for y in grads_pruned]
+    idx=diff.index(min(diff))
+    idx_true=idx+(len(grads[x])-len(grads_pruned))
+    logmsd_cm=[np.log10(y*10**-14) for y in MSD[x]['msd']]
+    logt_s=[np.log10(y*10**-12) for y in MSD[x]['t']]
+    logt_linear_range=[logt_s[y] for y in range(idx_true-3,idx_true+3)]
+    logmsd_linear_range=[logmsd_cm[y] for y in range(idx_true-3,idx_true+3)]
+    fit=np.polyfit(logt_linear_range,logmsd_linear_range,1)
+    tgt=MSD[x]['logmsd'][idx_true]-MSD[x]['logt'][idx_true]
+    print(x,fit,idx,idx_true)
+    D=10**fit[1]/6
+    D_tgt=10**tgt/6
+    print(x,D,D_tgt)
     plt.subplot(2,1,1)
-    plt.plot(MSD[x]['logt'],MSD[x]['logmsd'])
+    plt.plot(MSD[x]['logt'],MSD[x]['logmsd'],label=x)
+    plt.scatter(MSD[x]['logt'][idx_true],MSD[x]['logmsd'][idx_true])
+    plt.xlabel(r"$log_{10}\t\ /\ ps$")
+    plt.ylabel(r"$log_{10}\ RMSD}$")
     plt.subplot(2,1,2)
-    plt.plot(MSD[x]['t'],np.gradient(MSD[x]['logmsd'],MSD[x]['logt']))
+    plt.plot(MSD[x]['t'],np.gradient(MSD[x]['logmsd'],MSD[x]['logt']),label=x,markersize=1)
+    plt.scatter(MSD[x]['t'][idx_true],np.gradient(MSD[x]['logmsd'],MSD[x]['logt'])[idx_true],8,'k')
     plt.axhline(1)
     plt.ylim([0,2])
+    plt.xlabel("t / ps")
+    plt.ylabel(r"$\dfrac{dlog_{10}\ RMSD}{dlog_{10}\ t}$")
+plt.suptitle(temp)
+plt.legend()
+plt.tight_layout()
+
+    
+    
 #%%VACF
 with open(root+'vac_GCL.xvg') as ifile:
     lines=ifile.readlines()
@@ -208,6 +280,7 @@ D=1/3*np.trapz(vac,t)
 print(D)
 #%% HBONDS
 HB={}
+lbls={"CHL_OH_Clm":"choline-Cl^-","GCL_HO_GCL_O":"Gly-Gly","GCL_OH_Clm":"Gly-Cl^{-}","CHL_OH_GCL_O":"choline-Gly"}
 for x in hbonds:
     frames=[]
     hb=[]
@@ -222,12 +295,15 @@ for x in hbonds:
             continue
     HB[title]={'frame':frames,'HB':hb}
 HB_tot=sum([x for k in HB for x in HB[k]['HB'] ])/len(frames)
-
+wd,hg=set_size(426,0.3)
+fig=plt.figure(figsize=(wd,hg),dpi=150)
 clrs=['blue','cyan','tan','violet']
 for i,x in enumerate(HB):
-    plt.plot(HB[x]['frame'],[j/HB_tot for j in HB[x]['HB']],label=x,color=clrs[i])
+    plt.plot(HB[x]['frame'],[j/HB_tot for j in HB[x]['HB']],label=lbls[x],color=clrs[i])
+    print("Average HB percentage of {} = {}".format(x,np.mean([j/HB_tot for j in HB[x]['HB']])))
 plt.legend()
 plt.ylim([0,1])
+plt.savefig(os.path.join(root,'HB.pgf'),format='pgf')
 #print(HB['DES_BIG_MOD.parm7'])
 #%%
   

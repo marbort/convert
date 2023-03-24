@@ -1,6 +1,14 @@
 #%%
 import MDAnalysis as mda
 import numpy as np
+import matplotlib
+matplotlib.use("pgf")
+matplotlib.rcParams.update({
+    "pgf.texsystem": "pdflatex",
+    'font.family': 'serif',
+    'text.usetex': True,
+    'pgf.rcfonts': False,
+})
 import matplotlib.pyplot as plt
 import os
 from MDAnalysis.analysis import *
@@ -27,8 +35,39 @@ def coord_number2(x,y,dist_min,dist_max):
     
     CN_all=np.trapz(val_y,val_x)
     return(CN_all)
+def set_size(width_pt, fraction=1, subplots=(1, 1)):
+    """Set figure dimensions to sit nicely in our document.
+
+    Parameters
+    ----------
+    width_pt: float
+            Document width in points
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+    subplots: array-like, optional
+            The number of rows and columns of subplots.
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    # Width of figure (in pts)
+    fig_width_pt = width_pt * fraction
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    golden_ratio = (5**.5 - 1) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+    # Figure height in inches
+    fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
+
+    return (fig_width_in, fig_height_in)
 #%%
-with open(root+'cpptraj.atomic.out') as ifile:
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
+with open(os.path.join(root,'cpptraj.atomic.out')) as ifile:
     lines=ifile.readlines()
     names=[]
     Dd=[]
@@ -47,7 +86,7 @@ D={}
 for i,x in enumerate(ords):
     D[x]={'name':names[i],'density':round(Dd[i],6)}
 
-print(D['0024']['density'])
+#print(D['0024']['density'])
 #%%
 print(RDFs['0001_CHL_N1_CHL_N1']['CN'],RDFs['0001_CHL_N1_CHL_N1']['r_min'])
 print(RDFs['0024_GCL_C2_GCL_C2']['CN'],RDFs['0024_GCL_C2_GCL_C2']['r_min'])
@@ -55,7 +94,7 @@ print(RDFs['0025_GCL_C2_GCL_C1C3']['CN'],RDFs['0025_GCL_C2_GCL_C1C3']['r_min'])
 print(RDFs['0036_Clm_Clm']['CN'],RDFs['0036_Clm_Clm']['r_min'])
 # %%
 resnumb={"CHL":400,"Clm":400,"GCL":800}
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/"
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/085"
 id="_rdf_vol.dat"
 coms=glob.glob(root+"*"+id)
 coms.sort()
@@ -153,9 +192,9 @@ plt.show()
     
     
 
-# %%
+# %% COM RDF
 
-with open(root+'cpptraj.out') as ifile:
+with open(os.path.join(root,'cpptraj.out')) as ifile:
     lines=ifile.readlines()
     names=[]
     Dd=[]
@@ -171,7 +210,7 @@ with open(root+'cpptraj.out') as ifile:
 D2={}
 
 id2="_rdf.dat"
-coms2=glob.glob(root+"*com*"+id2)
+coms2=glob.glob(os.path.join(root,"*com*"+id2))
 RDFs2={}
 names2=[]
 ords2=[]
@@ -206,18 +245,18 @@ for i in RDFs2:
     RDFs2[i]['CN']=coord_Number(RDFs2[i]['RDF'][0],RDFs2[i]['RDF'][1],0,RDFs2[i]['r_min'],RDFs2[i]['#_part'])*D2[i]['density']
 #print(RDFs['GCL_C2_GCL_C2'])
 
-with open (root+'results_COM.dat','w') as ofile:
+with open (os.path.join(root,'results_COM.dat'),'w') as ofile:
     ofile.write("{:35s} {:>15s} {:>15s} {:>15s}\n".format('RDF','r_max','r_min','CN'))
     for i in RDFs2:
         ofile.write("{:35s} {:15.3f} {:15.3f} {:15.3f}\n".format(RDFs2[i]['name'],RDFs2[i]['r_max'],RDFs2[i]['r_min'],RDFs2[i]['CN']))
 
 # %%
-cell2='com_CHL_Clm'
-plt.plot(RDFs2[cell2]['RDF'][0],RDFs2[cell2]['RDF'][1])
+#cell2='com_CHL_Clm'
+#plt.plot(RDFs2[cell2]['RDF'][0],RDFs2[cell2]['RDF'][1])
 #plt.xlim([6,7])
-plt.show()
-print(RDFs2[cell2]['r_max'])
-print(RDFs2[cell2]['r_min'])
+##plt.show()
+#print(RDFs2[cell2]['r_max'])
+#print(RDFs2[cell2]['r_min'])
 
 cols=3
 rows=len(RDFs2)//cols+1
@@ -238,18 +277,22 @@ print("{} pippo".format(b))
 for i in RDFs2:
     print(i, RDFs2[i]['CN'])
 
-# %%
-fig=plt.figure(figsize=(10,10),dpi=150)
-clrs=['blue','orange','green','black','red','purple']
-legd=["Choline-Choline","Choline-chloride","Choline-glycerol",'Chloride-Chloride',"Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride']
+# %% RDFS COM PLOT
+wd,hg=set_size(345,0.5)
+fig=plt.figure(figsize=(wd,hg),dpi=150)
+clrs=['blue','orange','green','red','purple','black']
+legd=["Choline-Choline","Choline-chloride","Choline-glycerol","Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride','Chloride-Chloride',]
 for i,item in enumerate(RDFs2):
-    plt.plot(RDFs2[item]['RDF'][0], RDFs2[item]['RDF'][1],color=clrs[i])
+    plt.plot(RDFs2[item]['RDF'][0], RDFs2[item]['RDF'][1],color=clrs[i],label=item)
 plt.legend(legd)    
 for i,item in enumerate(RDFs2):
     plt.scatter(RDFs2[item]['r_max'],RDFs2[item]['RDF'][1][RDFs2[item]['maxima'][0][0]],color=clrs[i])
     plt.scatter(RDFs2[item]['r_min'],RDFs2[item]['RDF'][1][RDFs2[item]['minima'][0][0]],color=clrs[i])
+tit="COM-RDFs_"+ os.path.basename(root)
+plt.title(tit)
+plt.savefig(os.path.join(root,tit+'.pgf'), format='pgf')
 
-plt.title("COM-RDFs")
+
 for i in RDFs2:
     print(RDFs2[i]['name'], RDFs2[i]['CN'])
 #plt.xlim(limx2)

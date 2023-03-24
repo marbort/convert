@@ -1,6 +1,8 @@
 #%%
 import MDAnalysis as mda
 import numpy as np
+import matplotlib
+#matplotlib.use('Qt5agg')
 import matplotlib.pyplot as plt
 import os
 from MDAnalysis.analysis import *
@@ -446,12 +448,13 @@ for pair in pairsMg:
 plt.plot([CN['Mg'][x]['pos'] for x in CN['Mg']],[CN['Mg'][x][pairsMg[0]] + CN['Mg'][x][pairsMg[1]]+CN['Mg'][x][pairsMg[2]]+CN['Mg'][x][pairsMg[3]] for x in CN['Mg']],'-o',label="Sum")
 plt.ylim([-0.5,4.5])
 plt.xlim(limx_all)
-plt.legend(location='lower right')
+plt.legend(loc='lower right')
 plt.subplot(7,1,5)
 for pair in pairsCl:
         plt.plot([CN['Cl'][x]['pos'] for x in CN['Cl']],[CN['Cl'][x][pair] for x in CN['Cl']],'o-',label=pair)
-        plt.ylabel("Coord Number")
-plt.ylim([-0.5,3.5])
+plt.plot([CN['Cl'][x]['pos'] for x in CN['Cl']],[CN['Cl'][x][pairsCl[0]] + CN['Cl'][x][pairsCl[1]]+CN['Cl'][x][pairsCl[3]] for x in CN['Cl']],'-o',label="Sum")
+plt.ylabel("Coord Number")
+plt.ylim([-0.5,6.5])
 plt.xlim(limx_all)
 plt.legend()
 plt.subplot(7,1,7)
@@ -476,7 +479,8 @@ plt.legend()
 #plt.legend(["GCL","CHL","THF","Clm"])
 plt.xlabel('$z\ /\ nm$')
 plt.suptitle(mols)
-plt.tight_layout()
+#plt.tight_layout()
+plt.show()
 # %%
 with open('/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200/window29/angles_cpptraj.dat','r') as ifile:
         lines=ifile.readlines()
