@@ -269,7 +269,7 @@ print(COMS['GCL'][0])
 RDF_ACP_GCL=RDF_COM("resname ACP","resname GCL",u,0.1,15)
 #%%
 plt.plot(RDF_ACP_GCL[0][:-1],RDF_ACP_GCL[1])
-#%%
+1#%%
 #RDF_CHL
 RDF_CHL_ho_GCL_oh=mda.analysis.rdf.InterRDF(CHL_ho, GCL_oh, nbins=bins, range=(1.0, 8.0), exclusion_block=None,norm=normp)
 RDF_CHL_oh_GCL_ho=mda.analysis.rdf.InterRDF(CHL_oh, GCL_ho, nbins=bins, range=(1.0, 8.0), exclusion_block=None,norm=normp)

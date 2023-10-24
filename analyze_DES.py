@@ -1,7 +1,9 @@
 #%%
 import MDAnalysis as mda
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import os
 from MDAnalysis.analysis import *
 from MDAnalysis.analysis.bat import BAT
@@ -42,6 +44,14 @@ def set_size(width_pt, fraction=1, subplots=(1, 1)):
     fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
 
     return (fig_width_in, fig_height_in)
+def set_font(size):
+     font = {'family' : 'sans',
+        'weight' : 'normal',
+        'size'   : size}
+     return(font)
+    
+
+
 def coord_Number(x,y,dist_min,dist_max,mols):
     val_x=[k for k in x if dist_min<= k <=dist_max]
     val_x_sq=[k**2 for k in val_x]
@@ -168,10 +178,12 @@ def plot_RDF_MDanal(RDF,r,nmols):
     
 
 #%%
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
+#root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/0.2mmol_DESonly"
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/1.0mmol_DESonly"
+#root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/ANNEALED_BOX"
 #%%
 coms=glob.glob(root+"*_com.xvg")
-hbonds=glob.glob(os.path.join(root,"*hbond*"))
+h_bonds=glob.glob(os.path.join(root,"*hbond*"))
 #paths=glob.glob(root+"Iteration*/*/*.dcd")
 #print(paths)
 chars=["#","@"]
@@ -214,7 +226,7 @@ DES = u.select_atoms('resname CHL GCL Clm')
 #%% MSD
 outfile='dlogmsd_330k.dat'
 temp="330K"
-with open(root+'/msd.xvg','r') as ifile:
+with open(root+'/msd_npt_iso_C_rescale_330K_100ns_fromannealing.xvg','r') as ifile:
     lines=ifile.readlines()
 mols=[]
 MSD={}
@@ -256,13 +268,13 @@ for x in MSD:
     plt.subplot(2,1,1)
     plt.plot(MSD[x]['logt'],MSD[x]['logmsd'],label=x)
     plt.scatter(MSD[x]['logt'][idx_true],MSD[x]['logmsd'][idx_true])
-    plt.xlabel(r"$log_{10}\t\ /\ ps$")
+    plt.xlabel(r"$log_{10}\ t\ /\ ps$")
     plt.ylabel(r"$log_{10}\ RMSD}$")
     plt.subplot(2,1,2)
     plt.plot(MSD[x]['t'],np.gradient(MSD[x]['logmsd'],MSD[x]['logt']),label=x,markersize=1)
     plt.scatter(MSD[x]['t'][idx_true],np.gradient(MSD[x]['logmsd'],MSD[x]['logt'])[idx_true],8,'k')
     plt.axhline(1)
-    plt.ylim([0,2])
+    plt.ylim([0.8,1.2])
     plt.xlabel("t / ps")
     plt.ylabel(r"$\dfrac{dlog_{10}\ RMSD}{dlog_{10}\ t}$")
 plt.suptitle(temp)
@@ -280,8 +292,10 @@ D=1/3*np.trapz(vac,t)
 print(D)
 #%% HBONDS
 HB={}
-lbls={"CHL_OH_Clm":"choline-Cl^-","GCL_HO_GCL_O":"Gly-Gly","GCL_OH_Clm":"Gly-Cl^{-}","CHL_OH_GCL_O":"choline-Gly"}
-for x in hbonds:
+lbls={"CHL_OH_Clm":"$Ch^+-Cl^-$","GCL_HO_GCL_O":"$Gly-Gly$","GCL_OH_Clm":"$Gly-Cl^{-}$",
+      "CHL_OH_GCL_O":"$Ch^+-Gly$","GCL_OH_ACP_O":"$Gly-AcPh$","CHL_OH_ACP_O":"$Ch^+-AcPh$","GCL_OH_CHL_O":"$Gly-Ch^+"}
+
+for x in h_bonds:
     frames=[]
     hb=[]
     with open(x,'r') as ifile:
@@ -293,17 +307,52 @@ for x in hbonds:
             hb.append(int(j.split()[1].rstrip()))
         except:
             continue
-    HB[title]={'frame':frames,'HB':hb}
+    avg_HB=[np.average(hb),np.std(hb)]
+    HB[title]={'frame':frames,'HB':hb,'average_HB':avg_HB}
 HB_tot=sum([x for k in HB for x in HB[k]['HB'] ])/len(frames)
-wd,hg=set_size(426,0.3)
+HB_tot2=[sum(HB[k]['HB'][j] for k in HB) for j in range(len(HB[list(HB.keys())[0]]['HB'])) ]
+wd,hg=set_size(500,1)
+font=set_font(24)
+mpl.rc('font', **font)
 fig=plt.figure(figsize=(wd,hg),dpi=150)
-clrs=['blue','cyan','tan','violet']
+#clrs=['blue','cyan','tan','violet']
+clrs=mcolors.TABLEAU_COLORS
 for i,x in enumerate(HB):
-    plt.plot(HB[x]['frame'],[j/HB_tot for j in HB[x]['HB']],label=lbls[x],color=clrs[i])
+    plt.plot(HB[x]['frame'],[j/HB_tot2[k]  for k,j in enumerate(HB[x]['HB'])],markersize=3,
+             label=lbls[x],color=clrs[list(clrs.keys())[i]])
     print("Average HB percentage of {} = {}".format(x,np.mean([j/HB_tot for j in HB[x]['HB']])))
-plt.legend()
-plt.ylim([0,1])
+    
+
+
+
+for i in HB:
+    print("Mean HB {}: {:.3f} ± {:.3f}".format(i,np.mean(HB[i]['HB']),np.std(HB[i]['HB'])))
+plt.legend(ncols=2,loc='lower center',bbox_to_anchor=(0.5,-.5))
+plt.xlabel("Time / ns")
+plt.ylabel("Average HB percentage")
+plt.ylim([0,0.01])
 plt.savefig(os.path.join(root,'HB.pgf'),format='pgf')
+
+fig2=plt.figure(figsize=(wd,hg),dpi=150)
+#clrs=['blue','cyan','tan','violet']
+clrs=mcolors.TABLEAU_COLORS
+for i,x in enumerate(HB):
+    plt.plot(HB[x]['frame'],[j  for j in HB[x]['HB']],markersize=3,
+             label=lbls[x],color=clrs[list(clrs.keys())[i]])
+plt.legend(ncols=2,loc='lower center',bbox_to_anchor=(0.5,-.3))
+plt.xlabel("Time / ns")
+plt.ylabel("Number of H-Bonds")
+plt.ylim([0,1])
+plt.savefig(os.path.join(root,'HB_abs.pgf'),format='pgf')
+
+max_hbond=800
+histos=[np.histogram(HB[x]['HB'],bins=max_hbond,range=(0,max_hbond),density=True) for x in HB]
+fig3=plt.figure(figsize=(wd,hg),dpi=150)
+for x,i in enumerate(histos):
+    plt.plot(i[1][1:],i[0],label=lbls[list(lbls.keys())[x]])
+plt.legend()
+
+
 #print(HB['DES_BIG_MOD.parm7'])
 #%%
   
@@ -1062,6 +1111,7 @@ prova_h,prova_ed=np.histogram(a,bins=10,range=(0,10))
 plt.plot(prova_ed[:-1],prova_h)
 
 # %% DIFFUSIVITY CHECK
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/1.0mmol"
 with open(os.path.join(root,'msd.xvg'),'r') as ifile:
     vars=[]
     MSD={}
@@ -1075,12 +1125,17 @@ with open(os.path.join(root,'msd.xvg'),'r') as ifile:
         MSD[vars[i]]['msd']=[float(x.split()[i+1]) for x in lines if "#" not in x if "@" not in x]
         MSD[vars[i]]['logmsd']=[np.log10(float(x.split()[i+1])+0.00001) for x in lines if "#" not in x if "@" not in x ]
 
-        
-plt.figure()
-plt.plot(np.log10(t),MSD['CHL']['logmsd'])
-plt.figure()
-plt.plot(t,np.gradient(MSD['CHL']['logmsd'],np.log10(t)))
-plt.axhline(1)
+for res in MSD:
+    plt.figure(dpi=150,figsize=(16,9))
+    plt.subplot(2,1,1)
+    plt.plot(np.log10(t),MSD[res]['logmsd'],label=res)
+    plt.subplot(2,1,2)
+    plt.plot(t,np.gradient(MSD[res]['logmsd'],np.log10(t)),label=res)
+    plt.ylim(0.7,1.3)
+    plt.axhline(1)
+    plt.legend()
+    
+
     
 
 # %%

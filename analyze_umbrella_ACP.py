@@ -46,7 +46,7 @@ paths_ALL=[root+mols+"/umbrella_30_200/window{}/umbrella_whole.xtc".format(i) fo
 paths_ALL_mix=paths_THF+paths_DES
 
 profile=root+mols+"/umbrella_30_200/profile_all.xvg"
-histo=root+mols+"/umbrella_30_200/histo.xvg"
+histo=root+mols+"/umbrella_30_200/histo_all.xvg"
 data=[]
 data_hist=[]
 chars=["#","@"]
@@ -440,7 +440,7 @@ for i in paths_ALL:
                     print(pos,i)
 print(pos_umbrella)
                 
-#%%
+#%% PLOT ORIENTATION ALL
 posz_all=[x+5.14 for x in pos_umbrella]
 limy_all=[0,180]
 limx_all=[6,15]

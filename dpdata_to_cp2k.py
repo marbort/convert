@@ -12,7 +12,6 @@ parser.add_argument('--i', dest='i', default='./dpdata',
                     help='input folder in dpdata format.')
 
 
-
 parser.add_argument('--max_frames', type=int, dest='max_frames', default=1000000,
                     help='Maximum number of frames to convert. Is an alternative to --offset.')
 

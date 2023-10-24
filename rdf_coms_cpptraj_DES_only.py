@@ -66,7 +66,7 @@ def set_size(width_pt, fraction=1, subplots=(1, 1)):
 
     return (fig_width_in, fig_height_in)
 #%%
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/ANNEALED_BOX"
 with open(os.path.join(root,'cpptraj.atomic.out')) as ifile:
     lines=ifile.readlines()
     names=[]
@@ -94,7 +94,7 @@ print(RDFs['0025_GCL_C2_GCL_C1C3']['CN'],RDFs['0025_GCL_C2_GCL_C1C3']['r_min'])
 print(RDFs['0036_Clm_Clm']['CN'],RDFs['0036_Clm_Clm']['r_min'])
 # %%
 resnumb={"CHL":400,"Clm":400,"GCL":800}
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/085"
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
 id="_rdf_vol.dat"
 coms=glob.glob(root+"*"+id)
 coms.sort()
@@ -278,7 +278,7 @@ for i in RDFs2:
     print(i, RDFs2[i]['CN'])
 
 # %% RDFS COM PLOT
-wd,hg=set_size(345,0.5)
+wd,hg=set_size(345,1)
 fig=plt.figure(figsize=(wd,hg),dpi=150)
 clrs=['blue','orange','green','red','purple','black']
 legd=["Choline-Choline","Choline-chloride","Choline-glycerol","Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride','Chloride-Chloride',]
@@ -297,7 +297,7 @@ for i in RDFs2:
     print(RDFs2[i]['name'], RDFs2[i]['CN'])
 #plt.xlim(limx2)
 plt.ylim([0,3.5])
-# %%
+2# %%
 id3="_rdf.dat"
 coms3=glob.glob(root+"dens*"+id3)
 RDFs3={}

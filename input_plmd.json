@@ -1,0 +1,24 @@
+{
+    "plumed":{
+            "groups":{
+                    "THF_O":["Type_1","all"],
+                    "MG":["Type_3","all"]
+            },
+
+            "cvs":[ "cvMg1O: COORDINATION GROUPA=MG1 GROUPB=THF_O R_0=0.275 NN=12 MM=24 NLIST NL_CUTOFF=0.5 NL_STRIDE=200",
+                    "cvMg2O: COORDINATION GROUPA=MG2 GROUPB=THF_O R_0=0.275 NN=12 MM=24 NLIST NL_CUTOFF=0.5 NL_STRIDE=200",
+                    "uwall: UPPER_WALLS ARG=cvMg1O,cvMg2O AT=2.5,2.5  KAPPA=150.0,150.0 EXP=2,2 EPS=1,1 OFFSET=0,0",
+                    "lwall: LOWER_WALLS ARG=cvMg1O,cvMg2O AT=0.5,0.5  KAPPA=150.0,150.0 EXP=2,2 EPS=1,1 OFFSET=0,0",
+                    "metad: METAD ...", 
+                    "ARG=cvMg1O,cvMg2O TEMP=300",
+                    "PACE=200",
+                    "HEIGHT=1",
+                    "BIASFACTOR=8",
+                    "SIGMA=0.04,0.04",
+                    "FILE=HILLS",
+                    "..."
+            ],
+
+           "print":"PRINT  FILE=colvar ARG=*"
+    }
+}

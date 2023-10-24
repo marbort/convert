@@ -53,10 +53,10 @@ def RDF_POS_volume(gA,gB,Universe,binsize,max):
     gB_coms=[groupB.positions for ts in Universe.trajectory]
     boxes=[Universe.dimensions for ts in Universe.trajectory]
     if groupA == groupB:
-        com_arr  = [distances.self_distance_array(x,box=boxes[i],backend='OpenMP') for i,x in enumerate(gA_coms)]
+        com_arr  = [distances.self_distance_array(x,box=boxes[i]) for i,x in enumerate(gA_coms)]
         com_dist = [np.tile(x,2) for x in com_arr]
     else:
-        com_arr=[distances.distance_array(x,gB_coms[i],box=boxes[i],backend='OpenMP') for i,x in enumerate(gA_coms)]
+        com_arr=[distances.distance_array(x,gB_coms[i],box=boxes[i]) for i,x in enumerate(gA_coms)]
         com_dist=[x.reshape(x.shape[0]*x.shape[1]) for x in com_arr]
     bin_size = binsize
     # Create an array for the radial bins
@@ -715,11 +715,14 @@ for i,x in enumerate(ress):
 for i,item in enumerate(rdfs):
     plt.plot(bins_all[i][:-1],item,color=clrs[i])
 plt.legend(names)
-# %%
+# %% 
 #%%
 RDF_IMC_Mg_Clm=RDF_POS_volume("resname IMC and name Mg1","type Clm",u,0.1,15)
-#%%
-RDF_GCL_C_GCL_C=RDF_POS_volume("resname GCL and name C2","resname GCL and name C2",u,0.1,15)
+
+RDF_CHL_N_CHL_N=RDF_POS_volume("resname CHL and type n4","resname CHL and type n4",u,0.1,15)
 #%%
 plt.plot(RDF_IMC_Mg_Clm[0][:-1],RDF_IMC_Mg_Clm[2])
+plt.plot(RDF_CHL_N_CHL_N[0][:-1],RDF_CHL_N_CHL_N[2])
+# %%
+GCL=u.select_atoms("resname GCL and name C2")
 # %%

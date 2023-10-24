@@ -5,11 +5,6 @@ import numpy as np
 import argparse
 import shutil
 
-
-# print(re.search(r'(?<=Element).*?(?=SUM OF)',lines,re.DOTALL)[0])
-
-# This functions extracts coordinates and atom types from a CP2K trajectory
-# positions xyz file
 parser = argparse.ArgumentParser(description='Plot data')
 
 
@@ -17,14 +12,21 @@ parser.add_argument('--offset', dest='offset', default=1,
                     type=int, help='save only every nth frame')
 parser.add_argument('--feval', dest='feval', action='store_true',
                     help='Extract forces in Force Eval format')
-parser.add_argument('--types_map', dest='types_map', 
-                    help='Use supplied type map. If none use atom ordering in CP2K file')
+
+
+
 parser.add_argument('--box', dest='box', type=float,
                     help='XYZ Box Sizes (orthrombic only)', nargs=3)
 args = parser.parse_args()
-hartree_to_ev = 27.211399
 
-def extract_cp2k_coords(file, kind, tmap="none"):
+hartree_to_ev = 27.211399
+# print(re.search(r'(?<=Element).*?(?=SUM OF)',lines,re.DOTALL)[0])
+
+# This functions extracts coordinates and atom types from a CP2K trajectory
+# positions xyz file
+
+
+def extract_cp2k_coords(file, kind):
     traj_ener = np.empty(0)
     types_map = {}
     types = []
@@ -63,35 +65,17 @@ def extract_cp2k_coords(file, kind, tmap="none"):
                for k in range(nframes//args.offset)]
 
     index = 0
-    try: 
-        with open(tmap, 'r') as ifile:
-                        lines=ifile.readlines()
-                        for line in lines:
-                            types_map[line.split()[0]] = index
-                            index = index+1
-                        for i in atoms:
-                            types.append(types_map[i])
-    except:
-        print("Type Map file not found or formatted properly")
-        raise SystemExit(1)
-    
+    for i in atoms:
+        if i in types_map:
+            continue
+        else:
+            types_map[i] = index
+            index = index+1
+    for i in atoms:
+        types.append(types_map[i])
+        # numbers.append(atoms_dict[i])
+
     return (numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom)
-           
-"""
-    else:    
-        for i in atoms:
-            if i in types_map:
-                continue
-            else:
-                types_map[i] = index
-                index = index+1
-        for i in atoms:
-            types.append(types_map[i])
-            # numbers.append(atoms_dict[i])
-""" 
-
-
-   
 
 
 # This functions extracts forces from a CP2K trajectory forces xyz file
@@ -121,7 +105,7 @@ def extract_cp2k_frc(file, time, natom):
 
 
 
-def feval(file, types_file):
+def feval(file):
     with open(file, 'r') as ifile:
         lines = ifile.readlines()
         start = False
@@ -129,13 +113,6 @@ def feval(file, types_file):
         crds = []
         box = []
         types_map = []
-        hartree_to_ev=1
-        with open(types_file, 'r') as tfile:
-            types_dict={}
-            tlines=tfile.readlines()
-            for i,line in enumerate(tlines):
-                types_dict[line.split()[0]] = i
-          
 
         for line in lines:
             # Extract coordinates from CP2K files
@@ -171,13 +148,13 @@ def feval(file, types_file):
                     if "ATOMIC FORCES in" in line:
                         frc = [float(
                             lines2[k+3].split()[i])*uconv for k in range(j, j+len(crds)//3) for i in range(3, 6)]
-                        types = [int(types_dict[lines2[k+3].split()[2]]) for k in range(j, j+len(crds)//3)]
-                        #types_map_tmp = [str(lines2[k+3].split()[2])
-                         #                for k in range(j, j+len(crds)//3)]
-                        types_map=[x for x in types_dict.keys()]
-                        #for x in types_map_tmp:
-                         #   if x not in types_map:
-                          #      types_map.append(x)
+                        types = [int(lines2[k+3].split()[1]) -
+                                 1 for k in range(j, j+len(crds)//3)]
+                        types_map_tmp = [str(lines2[k+3].split()[2])
+                                         for k in range(j, j+len(crds)//3)]
+                        for x in types_map_tmp:
+                            if x not in types_map:
+                                types_map.append(x)
                         frcs_found = True
             return (crds, nrg, frc, types, types_map, frcs_found, box)
         except:
@@ -185,9 +162,10 @@ def feval(file, types_file):
             frcs_found = False
             exit()
 
+
 def savenpy(kind, val, traj_energy, types_map, types, dir, set, box):
 
-    #np.save(dir+set+"{}_numbers".format(kind), numbers)
+    np.save(dir+set+"{}_numbers".format(kind), numbers)
     np.save(dir+set+"{}".format(kind), val)
     # np.save(dir+set+"{}_grouped".format(kind),val_sch)
     np.save(dir+set+"energy", traj_energy)
@@ -218,108 +196,97 @@ def savefake_frcs(natoms, lgth, dir, set):
     val = np.zeros((lgth, natoms*3))
     np.save(dir+set+"force", val)
 
-def main():
-   
 
-    
-    crds_traj = []
-    crds_sch_traj = []
-    frc_traj = []
-    frc_sch_traj = []
-    traj_energy_traj = []
-    numbers = []
-    time_crds = []
-    time_frcs = []
-    box_traj = []
-    types_map=""
-    types=[]
+crds_traj = []
+crds_sch_traj = []
+frc_traj = []
+frc_sch_traj = []
+traj_energy_traj = []
+numbers = []
+time_crds = []
+time_frcs = []
+box_traj = []
 
-    if args.feval:
-        for file in os.listdir("./"):
-            if file.endswith(".inp"):
-                try:
-                    crds, nrg, frc, types, types_map, frcs_found, box = feval(file,args.types_map)
-                except:
-                    continue
-                if frcs_found:
-                    crds_traj.append(crds)
-                    frc_traj.append(frc)
-                    traj_energy_traj.append(nrg)
-                    box_traj.append(box)
+if args.feval:
+    for file in os.listdir("./"):
+        if file.endswith(".inp"):
+            try:
+                crds, nrg, frc, types, types_map, frcs_found, box = feval(file)
+            except:
+                continue
+            if frcs_found:
+                crds_traj.append(crds)
+                frc_traj.append(frc)
+                traj_energy_traj.append(nrg)
+                box_traj.append(box)
 
 
-    else:
-        for file in os.listdir("./"):
-            if file.endswith(".xyz"):
-                if "pos" in file:
-                    with open(file, 'r') as ifile:
-                            print("Extracting coordinates from {}".format(ifile.name))
-                            kind = "crds"
-                            numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom = extract_cp2k_coords(
-                                ifile, kind,args.types_map)
-                            crds_traj = crds_traj+val
-                            crds_sch_traj = crds_sch_traj+val_sch
-                            time_crds = time_crds+time
-                            traj_energy_traj = traj_energy_traj+traj_ener
-                            frc_file = ifile.name.replace('pos', 'frc')
-                            try:
-                                frc, frc_sch = extract_cp2k_frc(frc_file, time, natom)
-                                frc_traj = frc_traj+frc
-                                frc_sch_traj = frc_sch_traj+frc_sch
-                                frcs_found = True
-                            except:
-                                print("No Forces Found. Skipping extraction")
-                                frcs_found = False
-                            cell_file = ifile.name.replace('-pos', '').replace('.xyz', '.cell')
-                            if not args.box:
-                                
-                                # Extract Cell from CP2K output file and convert it to dpdata units
-                                # If does not exist, exit the program
-                                if os.path.isfile(cell_file):
-                                    
-                                    data = np.loadtxt(cell_file)
-                                else:
-                                    print("Cell file not found. Exiting")
-                                    exit()
-                                    
-                                try:
-                                    
-                                    box_single=data[:,2:-1]
-                                    time_box=data[:,1]
-                                    # pick indices of box that match the time of the coordinates
-                                    box_single=box_single[np.in1d(time_box,time)]
-                                    box_traj+=box_single.tolist()
-
-                                except:
-                                    print("No Cell Found. Skipping extraction")
+else:
+    for file in os.listdir("./"):
+        if file.endswith(".xyz"):
+            with open(file, 'r') as ifile:
+                if "pos" in ifile.name:
+                    print("Extracting coordinates from {}".format(ifile.name))
+                    kind = "crds"
+                    numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom = extract_cp2k_coords(
+                        ifile, kind)
+                    crds_traj = crds_traj+val
+                    crds_sch_traj = crds_sch_traj+val_sch
+                    time_crds = time_crds+time
+                    traj_energy_traj = traj_energy_traj+traj_ener
+                    frc_file = ifile.name.replace('pos', 'frc')
+                    try:
+                        frc, frc_sch = extract_cp2k_frc(frc_file, time, natom)
+                        frc_traj = frc_traj+frc
+                        frc_sch_traj = frc_sch_traj+frc_sch
+                        frcs_found = True
+                    except:
+                        print("No Forces Found. Skipping extraction")
+                        frcs_found = False
+                    cell_file = ifile.name.replace('-pos', '').replace('.xyz', '.cell')
+                    if not args.box:
+                        
+                        # Extract Cell from CP2K output file and convert it to dpdata units
+                        # If does not exist, exit the program
+                        if os.path.isfile(cell_file):
                             
+                            data = np.loadtxt(cell_file)
+                        else:
+                            print("Cell file not found. Exiting")
+                            exit()
+                            
+                        try:
+                             
+                            box_single=data[:,2:-1]
+                            time_box=data[:,1]
+                            # pick indices of box that match the time of the coordinates
+                            box_single=box_single[np.in1d(time_box,time)]
+                            box_traj+=box_single.tolist()
+
+                        except:
+                            print("No Cell Found. Skipping extraction")
+                        
 
 
 
 
-    dir = "./dpdata/"
-    set = "/set.000/"
-    if os.path.isdir(dir):
-        shutil.move(dir, "backup")
-    os.makedirs(dir+set)
+dir = "./dpdata/"
+set = "/set.000/"
+if os.path.isdir(dir):
+    shutil.move(dir, "backup")
+os.makedirs(dir+set)
 
-    kind = "coord"
-    #try:
-    savenpy(kind, crds_traj, traj_energy_traj,
-                types_map, types, dir, set, box_traj)
-    #except:
-    #   print("Types Map not Found")
-    #  exit()
-        
+kind = "coord"
+savenpy(kind, crds_traj, traj_energy_traj,
+        types_map, types, dir, set, box_traj)
 
 
-    if frcs_found:
-        savenpy_frcs(frc_traj, dir, set)
-    else:
-        print("No Forces Found. Creating fake array")
-        savefake_frcs(len(types), len(crds_traj), dir, set)
-if __name__=="__main__":
-    main()
+if frcs_found:
+    savenpy_frcs(frc_traj, dir, set)
+else:
+    print("No Forces Found. Creating fake array")
+    savefake_frcs(len(types), len(crds_traj), dir, set)
+
 
 # # Define a  main function that parses the command line arguments and calls the
 # # main function of the script.

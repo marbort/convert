@@ -1,15 +1,16 @@
 #%%
 import MDAnalysis as mda
 import numpy as np
-import matplotlib
-matplotlib.use("pgf")
-matplotlib.rcParams.update({
-    "pgf.texsystem": "pdflatex",
-    'font.family': 'serif',
-    'text.usetex': True,
-    'pgf.rcfonts': False,
-})
+import matplotlib as mpl
+#matplotlib.use("pgf")
+#matplotlib.rcParams.update({
+#    "pgf.texsystem": "pdflatex",
+#    'font.family': 'serif',
+#    'text.usetex': True,
+#    'pgf.rcfonts': False,
+#})
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import os
 from MDAnalysis.analysis import *
 from MDAnalysis.analysis.bat import BAT
@@ -23,6 +24,7 @@ from scipy.signal import argrelextrema
 from scipy.signal import find_peaks
 from PIL import Image
 from natsort import natsorted
+import subprocess
 #%%
 
 def angle_with_axes(groupA,groupB,Universe):
@@ -66,12 +68,12 @@ def set_size(width_pt, fraction=1, subplots=(1, 1)):
     fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
 
     return (fig_width_in, fig_height_in)
-def coord_Number(x,y,dist_min,dist_max,mols):
+def coord_Number(x,y,dist_min,dist_max,mols,dens):
     val_x=[k for k in x if dist_min<= k <=dist_max]
     val_x_sq=[k**2 for k in val_x]
     val_y=[y[i] for i,k  in enumerate(x) if dist_min <= k <= dist_max]
     prod=[k*val_y[i] for i,k in enumerate(val_x_sq)]
-    CN_all=4/3*np.pi*np.trapz(prod,val_x)
+    CN_all=4*np.pi*dens*np.trapz(prod,val_x)
     CN_one=CN_all/mols
     return(CN_one)
     
@@ -208,7 +210,7 @@ def plot_hbonds(folder:str,textsize:int,fraction:float,labels:list,title:str="")
     wd,hg=set_size(textsize,fraction)
     lbls={x:labels[i] for i,x in enumerate(HB)}
     fig=plt.figure(figsize=(wd,hg),dpi=150)
-    clrs=['blue','cyan','tan','violet']
+    clrs=['blue','cyan','tan','violet']+[x for x in mcolors.CSS4_COLORS]
     for i,x in enumerate(HB):
         plt.plot(HB[x]['frame'],[j/HB_tot for j in HB[x]['HB']],label=lbls[x],color=clrs[i])
         print("Average HB percentage of {} = {}".format(x,np.mean([j/HB_tot for j in HB[x]['HB']])))
@@ -217,7 +219,7 @@ def plot_hbonds(folder:str,textsize:int,fraction:float,labels:list,title:str="")
     plt.xlabel("Frame")
     plt.ylabel("H-Bond fraction")
     plt.savefig(os.path.join(folder,'HB.pgf'),format='pgf',bbox_inches = "tight")
-    
+#%%    
 def plot_COM_RDF(root:str,textsize:int,fraction:float,labels:list,title:str,resnumb:dict):
     with open(os.path.join(root,'cpptraj.out')) as ifile:
         lines=ifile.readlines()
@@ -231,7 +233,7 @@ def plot_COM_RDF(root:str,textsize:int,fraction:float,labels:list,title:str,resn
                 numb.append(max(int(line.split()[6].rstrip(',')),int(line.split()[11].rstrip(','))))
             if "Average density" in line:
                 Dd.append(float(line.split()[3]))
-            
+    print(Dd)        
     D2={}
 
     id2="_rdf.dat"
@@ -262,16 +264,18 @@ def plot_COM_RDF(root:str,textsize:int,fraction:float,labels:list,title:str,resn
         D2[x]={'name':names[i],'density':round(Dd[i],6)}
 
     for i in RDFs2:
-        RDFs2[i]['CN']=coord_Number(RDFs2[i]['RDF'][0],RDFs2[i]['RDF'][1],0,RDFs2[i]['r_min'],RDFs2[i]['#_part'])*D2[i]['density']
+        RDFs2[i]['CN']=coord_Number(RDFs2[i]['RDF'][0],RDFs2[i]['RDF'][1],0,RDFs2[i]['r_min'],
+                                    RDFs2[i]['#_part'],D2[i]['density'])
     #print(RDFs['GCL_C2_GCL_C2'])
 
     with open (os.path.join(root,'results_COM.dat'),'w') as ofile:
         ofile.write("{:35s} {:>15s} {:>15s} {:>15s}\n".format('RDF','r_max','r_min','CN'))
         for i in RDFs2:
-            ofile.write("{:35s} {:15.3f} {:15.3f} {:15.3f}\n".format(RDFs2[i]['name'],RDFs2[i]['r_max'],RDFs2[i]['r_min'],RDFs2[i]['CN']))
+            ofile.write("{:35s} {:15.3f} {:15.3f} {:15.3f}\n".format(RDFs2[i]['name'],
+                        RDFs2[i]['r_max'],RDFs2[i]['r_min'],RDFs2[i]['CN']))
     wd,hg=set_size(textsize,fraction)
     fig=plt.figure(figsize=(wd,hg),dpi=150)
-    clrs=['blue','orange','green','red','purple','black']
+    clrs=['blue','orange','green','red','purple','black']+[x for x in mcolors.TABLEAU_COLORS]
     legd=labels
     for i,item in enumerate(RDFs2):
         plt.plot(RDFs2[item]['RDF'][0], RDFs2[item]['RDF'][1],color=clrs[i],label=item)
@@ -283,9 +287,10 @@ def plot_COM_RDF(root:str,textsize:int,fraction:float,labels:list,title:str,resn
         plt.scatter(RDFs2[item]['r_min'],RDFs2[item]['RDF'][1][RDFs2[item]['minima'][0][0]],color=clrs[i])
     tit=title
     plt.title(tit)
-    plt.savefig(os.path.join(root,tit+'.pgf'), format='pgf',bbox_inches = "tight")
+    #plt.savefig(os.path.join(root,tit+'.pgf'), format='pgf',bbox_inches = "tight")
+    plt.savefig(os.path.join(root,tit+'.png'), format='png',bbox_inches = "tight")
 #%%
-def plot_DENS_cpptraj(root:str,textsize:int,fraction:float,labels:list,title:str="",a:float=0,b:float=0):
+def plot_DENS_cpptraj(root:str,textsize:int,fraction:float,labels:list,title:str="",ymax:float=0,shade:dict={}):
     files=glob.glob(os.path.join(root,"*DENS*"))
     dens={}
     for file in files:
@@ -304,16 +309,56 @@ def plot_DENS_cpptraj(root:str,textsize:int,fraction:float,labels:list,title:str
         for var in range(1,len(dens[file])):
             if max(dens[file][vars[var]]) > max_dens:
                 max_dens=max(dens[file][vars[var]])
+            if ymax < max(dens[file][vars[var]]):
+                ymax = max(dens[file][vars[var]])*0.1+max(dens[file][vars[var]])
             plt.plot(dens[file][vars[0]],dens[file][vars[var]],label=''.join(e for e in vars[var] if e.isalnum()))
+        plt.ylim((0,ymax))
         plt.xlabel(" Z / \AA")
         plt.ylabel("$ Density / Kg m^{-3}$ ")
         plt.legend()
-        plt.axvspan(a, b, color='#989898', alpha=0.5, lw=0)
+        for i in shade:
+            plt.axvspan(shade[i]["min"],shade[i]["max"], color='#989898', alpha=0.5, lw=0)
         plt.title(title)
         plt.savefig(os.path.join(root,title+'.pgf'), format='pgf',bbox_inches = "tight")
+        plt.close()
     
         
     return(dens,vars,fig)
+def plot_DENS_gmx(root:str,files:dict,textsize:int,fraction:float,labels:list,title:str="",ymax:float=0,shade:dict={},phase:dict={}):
+    dens={}
+    arr_starts=[]
+    arr_ends=[]
+    for file in files:
+        with open(os.path.join(root,files[file]),'r') as ifile:
+            lines=ifile.readlines()
+            dens[file]={"rho":[float(x.split()[1]) for x in lines if "@" not in x if "#" not in x],
+                        "Z":[float(x.split()[0])*10 for x in lines if "@" not in x if "#" not in x]}
+    wd,hg=set_size(textsize,fraction)
+    fig=plt.figure(figsize=(wd,hg),dpi=150)
+    for file in dens:
+        max_dens=0
+        if max(dens[file]["rho"]) > max_dens:
+            max_dens=max(dens[file]["rho"])
+        if ymax < max(dens[file]["rho"]):
+            ymax = max(dens[file]["rho"])*0.1+max(dens[file]["rho"])
+        plt.plot(dens[file]["Z"],dens[file]["rho"],label=file)
+        plt.ylim((0,ymax))
+        plt.xlabel(" Z / \AA")
+        plt.ylabel("$ Density / Kg m^{-3}$ ")
+        plt.legend()
+        for i in shade:
+            plt.axvspan(shade[i]["min"],shade[i]["max"], color='#989898', alpha=0.5, lw=0)
+        for i in phase:
+            plt.annotate(text='', xy=(phase[i]['start'],phase[i]['arry']), xytext=(phase[i]['end'],phase[i]['arry']), arrowprops=dict(arrowstyle='<->')) 
+            plt.text((phase[i]['start']+phase[i]['end'])/2,phase[i]['arry']+phase[i]['arry']*0.05,phase[i]['name'],ha='center')
+
+        plt.title(title)
+    plt.savefig(os.path.join(root,title+'.pgf'), format='pgf',bbox_inches = "tight")
+    plt.close()
+    
+        
+    return(dens,fig)
+
 def extract_umbrella_profile(root:str,profile:str,histo:str):
     data=[]
     data_hist=[]
@@ -324,17 +369,21 @@ def extract_umbrella_profile(root:str,profile:str,histo:str):
             lines=ifile.readlines()
             x=[float(x.split()[0])*10 for x in lines if x[0] not in chars ]
             y=[float(x.split()[1]) for x in lines if x[0] not in chars ]
-            x_corr=[j+51.4 for j in x]
+            x_corr=[j+57.6 for j in x]
             y_scaled=[i-min(y) for i in y]
             data.append([x_corr,y_scaled])
     with open(os.path.join(root,histo),'r') as ifile:
             lines=[x for x in ifile.readlines() if "#" not in x if "@" not in x]
-            data_hist.append([float(x.split()[0])*10+51.4 for x in lines])
+            data_hist.append([float(x.split()[0])*10+57.6 for x in lines])
             for i in range(1,len(lines[0].split())):
                 data_hist.append([float(x.split()[i]) for x in lines])
-            
-            
     return(data,data_hist)
+
+def extract_umbrella_profile_bootstrap(root:str,profile:str):
+    data=np.loadtxt(os.path.join(root,profile),unpack=True,comments=["#","@"])
+    return(data)
+            
+    
 
 def plot_image(file:str,textsize:int,fraction:float):
     dir=os.path.dirname(file)
@@ -345,7 +394,8 @@ def plot_image(file:str,textsize:int,fraction:float):
     plt.axis('off')
     plt.savefig(file+'.pgf')
 def calculate_orientation(root,top,sel1,sel2):
-    us=[] 
+    us=[]
+    paths_sorted=natsorted(glob.glob(os.path.join(root,"window*")))
     for path in paths_sorted:
             if os.path.exists(os.path.join(path,'ORIENTATION_OK')):
                     print("{} already done. Skipping...".format(path))
@@ -353,7 +403,7 @@ def calculate_orientation(root,top,sel1,sel2):
                     files=glob.glob(os.path.join(path,'*.xtc'))
                     dirs=[os.path.dirname(x) for x in files] 
                     fnames=[os.path.basename(x).replace('.xtc','') for x in files]
-                    dumps=[os.path.basename(x).replace('_whole.xtc','.tpr.dump') for x in files]
+                    dumps=[os.path.basename(x).replace('_whole.xtc','.dump') for x in files]
                     us=[mda.Universe(top,x) for x in files]
                     orientation=[angle_with_axes(sel1,sel2,x) for x in us]
                     ang_avg=[]
@@ -397,6 +447,7 @@ def calculate_orientation(root,top,sel1,sel2):
                                                     "##ANG STD##", std_ang_avg[index][0],std_ang_avg[index][1],std_ang_avg[index][2]))
                     subprocess.call(['touch',os.path.join(path,'ORIENTATION_OK')])
                     print("FINISHED {}".format(path))
+        
 
 def select_orientation(inputfile:str,outfile:str):
     root=os.path.dirname(inputfile)
@@ -484,63 +535,136 @@ def extract_RDF_gmx(root:str,mols:list):
 
 
 def extract_coordination_Number(tuls:list,RDFS:list):
-    posz_all=[x[0]*10+51.4 for x in tuls]
+    posz_all=[x[0]*10+57.6 for x in tuls]
     axis=["X","Y","Z"]
     CN={x:{} for x in RDFS}
+    data={x:{} for x in RDFS}
     for k in RDFS:
         for numb,i in enumerate(RDFS[k]):
-            if i != 'dist':
-                try:
-                    CN[k][i]={'pos':posz_all[-1-numb]}
-                except:
-                    continue
+            idx=0
+            if i == 'dist':
+                idx=numb
+            else:
+                if numb > idx:
+                    CN[k][i]={'pos':posz_all[numb-1]}
+                    data[k][i]={'pos':posz_all[numb-1]}
+                else:
+                    CN[k][i]={'pos':posz_all[numb]}
+                    data[k][i]={'pos':posz_all[numb]}
                 for j in RDFS[k][i]:
                         try:
                                 y_min=find_peaks([-x for x in RDFS[k][i][j]],width=1)
-                                x_min=RDFS[k]['dist'][y_min[0][0]]
+                                y_max=find_peaks([x for x in RDFS[k][i][j]],width=1)
+                                x_min=RDFS[k]['dist'][y_min[0][0]]# if RDFS[k]['dist'][y_min[0][0]] < 4 else 0]
+                                x_min_data=[RDFS[k]['dist'][y_min[0][0] if RDFS[k]['dist'][y_min[0][0]] < 3.7 else 0]]
+                                x_max_data=[RDFS[k]['dist'][y_max[0][0] if RDFS[k]['dist'][y_max[0][0]] < 3.7 else 0]]
+                                data[k][i][j]={"val":COORD[k][i][j][RDFS[k]['dist'].index(x_min)],"rmax":x_max_data[0],"rmin":x_min_data[0]}
                                 CN[k][i][j]=COORD[k][i][j][RDFS[k]['dist'].index(x_min)]
                         except:
-                               CN[k][i][j]=0
-    return(CN)
-                                        
+                                CN[k][i][j]=0
+                                data[k][i][j]={"val":0,"rmax":0,"rmin":0}
+    return(CN,data)
 #%%
+def calc_avg_distance(universe,traj,sel1,sel2,max):
+    temp=[]
+    Universe = mda.Universe(universe,traj)
+    groupA=Universe.select_atoms(sel1)
+    groupB=Universe.select_atoms(sel2)
+    dist=[mda.analysis.distances.distance_array(groupA,groupB) for ts in Universe.trajectory]
+    avg_dist=[x[(0<=x)&(x<=7.0)].mean() for x in dist if len(x[(0<=x)&(x<=5.0)])>=1 ]
+    return(dist,avg_dist)
+    
 
-root_HB="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
-plot_hbonds(root_HB,345,1,["Choline-Cl","Gly-Gly","Gly-Cl","choline-Gly"])
-# %%
-root_COM="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES"
-resnumb={"CHL":400,"Clm":400,"GCL":800}
-plot_COM_RDF(root_COM,345,1,["Choline-Choline","Choline-chloride","Choline-glycerol","Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride','Chloride-Chloride'],"0.90",resnumb)
+un="/run/media/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200/ANNEALED_BOX/UMBRELLA_BIG_IMC_MOD_ANNEALED.parm7"
+trj="/run/media/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX/window3.9/umbrella_whole.xtc"
+dst,av_dst=calc_avg_distance(un,trj,'type mg','type Clm',3.5)
+#%%
+print(dst[0][(dst[0]<=10)])
+#print(dst[0][(0<=dst[0])&(dst[0]<=5.0)])
+#print(dst[0][(0<=dst[0])&(dst[0]<=5.0)].mean())
+#print(av_dist)
+                      
+                      
+                      
+                      
+                      
+                                      
+#%%
+############################################
+### ANALYSIS
+############################################
+
+
+root_HB="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/1.0mmol_DESonly"
+plot_hbonds(root_HB,345,1,["Choline-Cl","Gly-Gly","Gly-Cl","choline-Gly","Gly-AcPh","Chl-AcPh"])
 
 # %%
-root_DENS="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh"
-D,v,fig=plot_DENS_cpptraj(root_DENS,345,1,["Acetophenone"],"rho-ACP",84,106)
+root_COM="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/0.2mmol_DESonly"
+#root_COM="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/ANNEALED_BOX"
+resnumb={"CHL":400,"Clm":400,"GCL":800,"ACP":26}
+#resnumb={"CHL":400,"Clm":400,"GCL":800}
+plot_COM_RDF(root_COM,500,1,["Choline-Choline","Choline-chloride","Choline-glycerol","Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride',
+                            'AcPh-Choline','AcPh-Chloride','AcPh-glycerol','AcPh-AcPh'],"0.90",resnumb)
+#plot_COM_RDF(root_COM,500,1,["Choline-Choline","Choline-chloride","Choline-glycerol","Glycerol-chloride","Glycerol-glycerol",'Chloride-Chloride'
+#                            ],"0.90",resnumb)
+
+# %%
+root_DENS_IMC="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/ANNEALED"
+root_DENS_ACP="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING"
+#D,v,fig=plot_DENS_cpptraj(root_DENS,345,1,["Acetophenone"],"rho-ACP",150,{1:{"min":94,"max":107},2:{"min":204,"max":206},3:{"min":-1,"max":11.7}})
+D_IMC,fig_IMC=plot_DENS_gmx(root_DENS_IMC,{"ACT":"ACT_density.xvg","IMC":"IMC_density.xvg"},345,1,["Acetophenone"],"rho-ACT-IMC",60,
+                            {1:{"min":94,"max":107},2:{"min":204,"max":206},3:{"min":-1,"max":11.7}},
+                            {1:{"name":"DES","start":11.7,"end":94,"arry":35},2:{"name":"THF","start":107,"end":204,"arry":35}})
+D_ACP,fig_ACP=plot_DENS_gmx(root_DENS_ACP,{"ACP":"ACP_density.xvg"},345,1,["Acetophenone"],"rho-ACP",60,
+                            {1:{"min":94,"max":107},2:{"min":204,"max":206},3:{"min":-1,"max":11.7}},
+                            {1:{"name":"DES","start":11.7,"end":94,"arry":35},2:{"name":"THF","start":107,"end":204,"arry":35}})
 # %% PLOT PMFS
 root_PMF="/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/"
-mols=["IMC","ACT","ACP"]
-dir="umbrella_30_200"
-textsize=426
-fraction=1
-a=84
-b=106
-limx=[65,120]
-limy=[-1,40]
-graph_data=[extract_umbrella_profile(os.path.join(root_PMF,x,dir),'profile_all.xvg','hist_all.xvg') for x in mols]
+#mols=["IMC","ACT","ACP"]
+font = {'family' : 'sans',
+        'weight' : 'normal',
+        'size'   : 32}
+mpl.rc('font', **font)
+mols=["ACP","IMC"]
+dir="umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX"
+textsize=800
+fraction=2
+a=10.1
+b=11.5
+limx=[9.5,12.0]
+limy=[-1,12]
+arry=15
+bootstrap=True
+graph_data=[extract_umbrella_profile(os.path.join(root_PMF,x,dir),'profile.xvg','histo.xvg') for x in mols]
+if bootstrap:
+    bs=[extract_umbrella_profile_bootstrap(os.path.join(root_PMF,x,dir),'bootstrap_avg.xvg') for x in mols]
 wd,hg=set_size(textsize,fraction)
-fig=plt.figure(figsize=(wd,hg*2),dpi=150)
+#wd,hg=15,10
+
+fig=plt.figure(figsize=(wd,hg),dpi=150)
 for i,x in enumerate(graph_data):
-    plt.subplot(3,1,i+1)
-    plt.plot(x[0][0][0],x[0][0][1],label=mols[i])
+    plt.subplot(len(graph_data),1,i+1)
+    #plt.plot([k/10 for k in x[0][0][0]],x[0][0][1],label=mols[i])
+    if bootstrap:
+        print(min(bs[i][1]))
+        plt.plot([k+5.7 for k in bs[i][0]],[k-min(bs[i][1]) for k in bs[i][1]] ,label=mols[i])
+        plt.fill_between([x+5.7 for x in bs[i][0]],[k-min(bs[i][1]) for k in bs[i][1]]+bs[i][2],
+                         [k-min(bs[i][1]) for k in bs[i][1]]-bs[i][2],alpha=0.3)
+        
     plt.xlim(limx)
     plt.ylim(limy)
-    plt.legend()
+    #plt.legend()
+    #plt.annotate(text='', xy=(limx[0],arry), xytext=(a,arry), arrowprops=dict(arrowstyle='<->')) 
+    plt.text((limx[0]+a)/2,arry+arry*0.05,"DES",ha='center')
+    #plt.annotate(text='', xy=(b,arry), xytext=(limx[1],arry), arrowprops=dict(arrowstyle='<->'))
+    plt.text((b+limx[1])/2,arry+arry*0.05,"THF",ha='center')
     plt.axvspan(a, b, color='#989898', alpha=0.5, lw=0)
-    plt.ylabel("Free Energy / $Kjmol^{-1}$")
-    plt.tight_layout
-plt.xlabel("Z / \AA")
+    plt.ylabel("Free Energy $(Kj\ mol^{-1})$")
+    plt.tight_layout()
+plt.xlabel("Z coordinate (nm)")
 
 
-plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_PMF.pgf'), format='pgf',bbox_inches = "tight")
+plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_PMF.png'), format='png',bbox_inches = "tight")
 
 #PLOT HISTOS
 fig=plt.figure(figsize=(wd,hg*2),dpi=150)
@@ -549,13 +673,13 @@ for i,x in enumerate(graph_data):
     for j in range(1,len(x[1])):
         plt.plot(x[1][0],x[1][j])
     plt.xlim(limx)
-    plt.legend(mols[i])
+    #plt.legend(mols[i])
     #plt.ylim(limy)
     #plt.legend()
     plt.axvspan(a, b, color='#989898', alpha=0.5, lw=0)
     plt.ylabel("Free Energy / $Kjmol^{-1}$")
     plt.tight_layout
-plt.xlabel("Z / \AA")
+plt.xlabel("Z / $\AA$")
 
 
 plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_HIST.pgf'), format='pgf',bbox_inches = "tight")
@@ -564,51 +688,114 @@ plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_HIST.pgf'), format='pgf',bbox
 
 # %%
 plot_image('/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/img/interface_struct.pov.png',426,1)
-# %%extract ORIENTATION
-tuls=select_orientation('/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200/tprfiles_DES.dat','/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200/orientation_results.dat')
-mols,pairs,RDFS,COORD=extract_RDF_gmx('/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200',["Mg","Cl"])
-orientation_PROFILE=extract_umbrella_profile('/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200','profile_all.xvg','hist_all.xvg')
-CN=extract_coordination_Number(tuls,RDFS)
+
+
+
+
+#%%
+# calc ORIENTATION
+ORIENT_root="/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/ACP/umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX"
+TOP="/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/ACP/umbrella_30_200/ANNEALED_BOX/UMBRELLA_BIG_ACP_MOD_ANNEALED.parm7"
+calculate_orientation(ORIENT_root,TOP,"resname ACP and type c","resname ACP and type o")
+
+#%% extract ORIENTATION
+
+tuls=select_orientation(os.path.join(ORIENT_root,'tprfiles.dat'),os.path.join(ORIENT_root,'orientation_results.dat'))
+mols,pairs,RDFS,COORD=extract_RDF_gmx(ORIENT_root,["O"])
+orientation_PROFILE=extract_umbrella_profile(ORIENT_root,'profile.xvg','histo.xvg')
+CN,dst=extract_coordination_Number(tuls,RDFS)
 # %% PLOT ORIENTATION
 
 wd,hg=set_size(426,1)
 fig=plt.figure(figsize=(wd,hg*2),dpi=150)
 
-root_ORIENT='/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/IMC/umbrella_30_200'
-limx_all=[65,125]
+root_ORIENT='/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/ACP/umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX'
+limx_all=[95,140]
 limy_all=[0,40]
+int_start=105
+int_end=115
+arry_orient=2.5
+limx=[95,140]
+limy=[-1,15]
+a=105
+b=115
 ltr=['a','b','c','d','e']
+#labels=[["THF-O","CHL-O","GCL-O","Clm"],["CHL-HO","CHL-N","GCL-HO"]]
+labels=[["CHL-HO","GCL-HO","CHL-N"]]
 ax=plt.subplot(4,1,1)
-plt.errorbar([x[0]*10+51.4 for x in tuls],[x[1][2] for x in tuls],[x[2][2] for x in tuls],linestyle=None)
-plt.plot([x[0]*10+51.4 for x in tuls],[x[1][2] for x in tuls])
+plt.errorbar([x[0]*10+57.6 for x in tuls],[x[1][2] for x in tuls],[x[2][2] for x in tuls],linestyle=None)
+plt.plot([x[0]*10+57.6 for x in tuls],[x[1][2] for x in tuls])
 plt.text(.9,.9,'a',transform=ax.transAxes)
-plt.axvline(x=106, color = '#989898')
-plt.axvline(x=84, color = '#989898')
+plt.axvline(x=int_start, color = '#989898')
+plt.axvline(x=int_end, color = '#989898')
 plt.axhline(y=90, color = '#989898')
 plt.xlim(limx_all)
 plt.ylabel("Z Angle / deg")
 for i,mol in enumerate(mols):
     ax=plt.subplot(4,1,2+i)
     plt.text(.9,.9,ltr[1+i],transform=ax.transAxes)
-    for pair in pairs[i]:
-            plt.plot([CN[mol][x]['pos'] for x in CN[mol]],[CN[mol][x][pair] for x in CN[mol] if x != 'dist'],'o-',label=''.join(e for e in pair if e.isalnum()))
+    for k,pair in enumerate(pairs[i]):
+            #plt.plot([CN[mol][x]['pos'] for x in CN[mol]],[CN[mol][x][pair]['val'] for x in CN[mol] if x != 'dist'],'o-',label=labels[i][k])
+            plt.plot([CN[mol][x]['pos'] for x in CN[mol]],[CN[mol][x][pair] for x in CN[mol] if x != 'dist'],'o-',label=labels[i][k])
             plt.ylabel("Coord Number")
-            plt.axvline(x=106, color = '#989898')
-            plt.axvline(x=84, color = '#989898')
+            plt.axvline(x=int_start, color = '#989898')
+            plt.axvline(x=int_end, color = '#989898')
             plt.legend(loc='lower right')
             plt.xlim(limx_all)
 #plt.plot([CN['Mg'][x]['pos'] for x in CN['Mg']],[CN['Mg'][x][pairsMg[0]] + CN['Mg'][x][pairsMg[1]]+CN['Mg'][x][pairsMg[2]]+CN['Mg'][x][pairsMg[3]] for x in CN['Mg']],'-o',label="Sum")
-            plt.ylim([-0.5,4.5])
+            plt.ylim([-0.5,3.5])
+plt.annotate(text='', xy=(limx[0],arry_orient), xytext=(a,arry_orient), arrowprops=dict(arrowstyle='<->')) 
+plt.text((limx[0]+a)/2,arry_orient+arry_orient*0.05,"DES",ha='center')
+plt.annotate(text='', xy=(b,arry_orient), xytext=(limx[1],arry_orient), arrowprops=dict(arrowstyle='<->'))
+plt.text((b+limx[1])/2,arry_orient+arry_orient*0.05,"THF",ha='center')
 
 
 ax=plt.subplot(4,1,2+len(mols))
 plt.text(.9,.9,ltr[1+len(mols)],transform=ax.transAxes)
 plt.plot(orientation_PROFILE[0][0][0],orientation_PROFILE[0][0][1])
-plt.axvline(x=106, color = '#989898')
-plt.axvline(x=84, color = '#989898')
+plt.axvline(x=int_start, color = '#989898')
+plt.axvline(x=int_end, color = '#989898')
 plt.ylabel("Free Energy / Kj/mol")
+plt.xlabel("Z / \AA")
 plt.xlim(limx_all)
 plt.tight_layout()
-plt.savefig(os.path.join(root_ORIENT,'_IMC_ORIENT.pgf'), format='pgf',bbox_inches = "tight")
+plt.savefig(os.path.join(root_ORIENT,'IMC_ORIENT.png'), format='png',bbox_inches = "tight")
+plt.close()
+# %%
+# %% PLOT RDFS MAXIMA and MINIMA
+arry_orient=1
+limy_dst=[0,3.7]
+wd,hg=set_size(426,1)
+fig=plt.figure(figsize=(wd,hg),dpi=150)
+#ax=plt.subplot(2,1,1)
+plt.plot([dst['Mg'][x]['pos'] for x in dst['Mg']] ,[dst['Mg'][x]['"Clm"']['rmax'] for x in dst['Mg'] if x != 'dist'],'o-',label="rmax")
+plt.plot([dst['Mg'][x]['pos'] for x in dst['Mg']] ,[dst['Mg'][x]['"Clm"']['rmin'] for x in dst['Mg'] if x != 'dist'],'o-',label="rmin")
+plt.annotate(text='', xy=(limx[0],arry_orient), xytext=(a,arry_orient), arrowprops=dict(arrowstyle='<->')) 
+plt.text((limx[0]+a)/2,arry_orient+arry_orient*0.05,"DES",ha='center')
+plt.annotate(text='', xy=(b,arry_orient), xytext=(limx[1],arry_orient), arrowprops=dict(arrowstyle='<->'))
+plt.text((b+limx[1])/2,arry_orient+arry_orient*0.05,"THF",ha='center')
+plt.legend()
+plt.axvline(x=int_start, color = '#989898')
+plt.axvline(x=int_end, color = '#989898')
+plt.ylabel("R / \AA")
+plt.xlabel("Z / \AA")
+plt.xlim(limx_all)
+plt.ylim(limy_dst)
+"""
+ax=plt.subplot(2,1,2)
+plt.plot([dst['Mg'][x]['pos'] for x in dst['Mg']] ,[dst['Mg'][x]['"Clm"']['rmin'] for x in dst['Mg'] if x != 'dist'],'o-',label="rmin")
+plt.annotate(text='', xy=(limx[0],arry_orient), xytext=(a,arry_orient), arrowprops=dict(arrowstyle='<->')) 
+plt.text((limx[0]+a)/2,arry_orient+arry_orient*0.05,"DES",ha='center')
+plt.annotate(text='', xy=(b,arry_orient), xytext=(limx[1],arry_orient), arrowprops=dict(arrowstyle='<->'))
+plt.text((b+limx[1])/2,arry_orient+arry_orient*0.05,"THF",ha='center')
+plt.axvline(x=int_start, color = '#989898')
+plt.axvline(x=int_end, color = '#989898')
+plt.legend()
+plt.ylabel("R / \AA")
+plt.xlabel("Z / \AA")
+plt.xlim(limx_all)
+plt.ylim(limy_dst)
+"""
+plt.savefig(os.path.join(root_ORIENT,'IMC_Mg-Cl_dist.pgf'), format='pgf',bbox_inches = "tight")
 plt.close()
 # %%
