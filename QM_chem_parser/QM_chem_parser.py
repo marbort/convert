@@ -14,6 +14,20 @@ from cclib.parser import logfileparser
 import io
 from tech_parse import parse_tech
 
+class NumpyAwareJSONEncoder(json.JSONEncoder):
+    """A encoder for numpy.ndarray's obtained from the cclib attributes.
+       For all other types the json default encoder is called.
+       Do Not rename the 'default' method as it is required to be implemented
+       by any subclass of the json.JSONEncoder
+    """
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            if obj.ndim == 1:
+                nan_list = obj.tolist()
+                return [None if np.isnan(x) else x for x in nan_list]
+            else:
+                return [self.default(obj[i]) for i in range(obj.shape[0])]
+        return json.JSONEncoder.default(self, obj)
 
 
 def parsed_data():
@@ -403,6 +417,7 @@ def main():
     prop = parser.add_argument_group('Properties')
     prop.add_argument("--prop", 
                       nargs='+',
+                      default="scfenergies",
                       help='Select relevant property. Selection help print available properties')
     
     sw = parser.add_argument_group('Supported Softwares')
@@ -424,6 +439,10 @@ def main():
     output_pars.add_argument('--full',
                             action='store_true',
                             help='print full parsed data in single json files')
+    output_pars.add_argument('--recursive',
+                            action='store_true',
+                            help='Look recursively for input files')
+    
     output_pars.add_argument('-v', '--verbose',
                         action='store_true',
                         help='more verbose parsing output (only errors by default)')
@@ -456,15 +475,21 @@ def main():
     #filenames="LlOQ_tolyl_ACN_S0opt_exc_TD_PBE1PBE.log"
     filenames=[]
     for file in args.input:
-        filenames+=glob.glob(file)
+        if args.recursive:
+            filenames+=glob.glob(file,recursive=True)
+        else:
+            filenames+=glob.glob(file)
     print(filenames)
     files=dict()
     for file in filenames:
-        data=ccopen(file)
-        files[file]=f"{data}".split()[0]
+        try:
+            data=ccopen(file)
+            files[file]=f"{data}".split()[0]
+        except:
+            print(f"Cannot read file {file}")
         #for prop in args.
     #print(f"{files}".split()[0])
-    print(files)
+    #print(files)
     #types=guess_filetype(files)
     #print(types)
 
@@ -497,44 +522,48 @@ def main():
             log.logger.setLevel(logging.INFO)
         else:
             log.logger.setLevel(logging.ERROR)
-        data = log.parse()
+        try:
+            data = log.parse()
+            parsed=True
+        except:
+            print(f"Error parsing logfile {filename}")
+            parsed=False
         #print(f"cclib can parse the following attributes from {filename}:")
         #hasattrs = [f"  {attr}" for attr in ccData._attrlist if hasattr(data, attr)]
         #print("\n".join(hasattrs))
         
         
-        
-        if args.full:
-            # Write out to disk.
-            outputdest = '.'.join([os.path.splitext(os.path.basename(filename))[0], outputtype])
-            ccwrite_kwargs = dict()
-            if future:
-                ccwrite_kwargs['future'] = True
-            if ghost:
-                ccwrite_kwargs['ghost'] = ghost
-            # For XYZ files, write the last geometry unless otherwise
-            # specified.
-            if not index:
-                index = -1
-            ccwrite_kwargs['jobfilename'] = filename
+        if parsed:
+            if args.full:
+                # Write out to disk.
+                outputdest = '.'.join([os.path.splitext(os.path.basename(filename))[0], outputtype])
+                ccwrite_kwargs = dict()
+                if future:
+                    ccwrite_kwargs['future'] = True
+                if ghost:
+                    ccwrite_kwargs['ghost'] = ghost
+                # For XYZ files, write the last geometry unless otherwise
+                # specified.
+                if not index:
+                    index = -1
+                ccwrite_kwargs['jobfilename'] = filename
 
-            # The argument terse presently is only applicable to
-            # CJSON/JSON formats
-            ccwrite(data, outputtype, outputdest, indices=index, terse=terse,
-                    **ccwrite_kwargs)
-            with open(outputdest,'r') as jfile:
-                data_json=json.load(jfile)
-            data_json['technical'] = {'pars':technical[0],'num_calc':technical[1]}
-            with open(outputdest,'w') as jsofile:
-                json.dump(data_json,jsofile)
-        
-        else:
-            props=[filename]
-            for prop in args.prop:
-                if prop == "technical":
-                    props.append(technical[0])
-                else:
-                    if args.index:
+                # The argument terse presently is only applicable to
+                # CJSON/JSON formats
+                ccwrite(data, outputtype, outputdest, indices=index, terse=terse,
+                        **ccwrite_kwargs)
+                
+                technical = {'pars':technical[0],'num_calc':technical[1]}
+                with open(outputdest+"_technical",'w') as jsofile:
+                    json.dump(technical,jsofile,indent=4)
+                
+            
+            else:
+                props=[filename]
+                for prop in args.prop:
+                    if prop == "technical":
+                        props.append(technical[0])
+                    else:
                         try:
                             props.append(getattr(data,prop)[args.index])
                         except:
@@ -542,25 +571,29 @@ def main():
                                 props.append(getattr(data,prop))
                             except:
                                 print(f"{prop} not found for {filename}")
-                            
-            props_all.append(props)
+                                
+                props_all.append(props)
 
     prop_string=["Name"] + [x for x in args.prop]
     
-
     with open("Properties.csv",'w') as ofile:
         for line in props_all:
             for i,prop in enumerate(line):
-                ofile.write(f"{prop_string[i]:20s},")
+                if prop_string[i] in list(pdata.keys()):
+                    string=f"{prop_string[i]} ({pdata[prop_string[i]]['units']})"
+                    ofile.write(f"{string:30s}@")
+                else:
+                    ofile.write(f"{prop_string[i]:30s}@")
                 if isinstance(prop,list):
                     for subprop in prop:
-                        ofile.write(f"{subprop}")
-    
+                        ofile.write(f"{subprop};")
                 else:
                     ofile.write(f"{prop}")
                 ofile.write("\n")
             ofile.write("\n")
-            
+    
+    print(f"Files found: {len(files)}")        
+    print(f"Files correctly parsed: {len(props_all)}")
                         
         
 
