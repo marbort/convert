@@ -1,0 +1,367 @@
+{
+  "aonames": {
+    "desc": "atomic orbital names",
+    "units": "",
+    "type": "list of strings"
+  },
+  "aooverlaps": {
+    "desc": "atomic orbital overlap matrix",
+    "units": "",
+    "type": "array of rank 2"
+  },
+  "atombasis": {
+    "desc": "indices of atomic orbitals on each atom",
+    "units": "",
+    "type": "list of lists"
+  },
+  "atomcharges": {
+    "desc": "atomic partial charges",
+    "units": "",
+    "type": "dict of arrays of rank 1"
+  },
+  "atomcoords": {
+    "desc": "atom coordinates",
+    "units": "angstroms",
+    "type": "array of rank 3"
+  },
+  "atommasses": {
+    "desc": "atom masses",
+    "units": "daltons",
+    "type": "array of rank 1"
+  },
+  "atomnos": {
+    "desc": "atomic numbers",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "atomspins": {
+    "desc": "atomic spin densities",
+    "units": "",
+    "type": "dict of arrays of rank 1"
+  },
+  "ccenergies": {
+    "desc": "molecular energies with Coupled-Cluster corrections",
+    "units": "eV",
+    "type": "array of rank 2"
+  },
+  "charge": {
+    "desc": "net charge of the system",
+    "units": "",
+    "type": "integer"
+  },
+  "coreelectrons": {
+    "desc": "number of core electrons in atom pseudopotentials",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "dispersionenergies": {
+    "desc": "dispersion energy corrections",
+    "units": "eV",
+    "type": "array of rank 1"
+  },
+  "enthalpy": {
+    "desc": "sum of electronic and thermal enthalpies",
+    "units": "hartree/particle",
+    "type": "float"
+  },
+  "entropy": {
+    "desc": "entropy",
+    "units": "hartree/particle*kelvin",
+    "type": "float"
+  },
+  "etenergies": {
+    "desc": "energies of electronic transitions",
+    "units": "1/cm",
+    "type": "array of rank 1"
+  },
+  "etoscs": {
+    "desc": "oscillator strengths of electronic transitions",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "etdips": {
+    "desc": "electric transition dipoles of electronic transitions",
+    "units": "ebohr",
+    "type": "array of rank 2"
+  },
+  "etveldips": {
+    "desc": "velocity-gauge electric transition dipoles of electronic transitions",
+    "units": "ebohr",
+    "type": "array of rank 2"
+  },
+  "etmagdips": {
+    "desc": "magnetic transition dipoles of electronic transitions",
+    "units": "ebohr",
+    "type": "array of rank 2"
+  },
+  "etrotats": {
+    "desc": "rotatory strengths of electronic transitions",
+    "units": "??",
+    "type": "array of rank 1"
+  },
+  "etsecs": {
+    "desc": "singly-excited configurations for electronic transitions",
+    "units": "",
+    "type": "list of lists"
+  },
+  "etsyms": {
+    "desc": "symmetries of electronic transitions",
+    "units": "",
+    "type": "list of string"
+  },
+  "freeenergy": {
+    "desc": "sum of electronic and thermal free energies",
+    "units": "hartree/particle",
+    "type": "float"
+  },
+  "fonames": {
+    "desc": "fragment orbital names",
+    "units": "",
+    "type": "list of strings"
+  },
+  "fooverlaps": {
+    "desc": "fragment orbital overlap matrix",
+    "units": "",
+    "type": "array of rank 2"
+  },
+  "fragnames": {
+    "desc": "names of fragments",
+    "units": "",
+    "type": "list of strings"
+  },
+  "frags": {
+    "desc": "indices of atoms in a fragment",
+    "units": "",
+    "type": "list of lists"
+  },
+  "gbasis": {
+    "desc": "coefficients and exponents of Gaussian basis functions",
+    "units": "",
+    "type": "PyQuante format"
+  },
+  "geotargets": {
+    "desc": "targets for convergence of geometry optimization",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "geovalues": {
+    "desc": "current values for convergence of geometry optmization",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "grads": {
+    "desc": "current values of forces (gradients) in geometry optimization",
+    "units": "",
+    "type": "array of rank 3"
+  },
+  "hessian": {
+    "desc": "elements of the force constant matrix",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "homos": {
+    "desc": "molecular orbital indices of HOMO(s)",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "metadata": {
+    "desc": "various metadata about the package and computation",
+    "units": "",
+    "type": "dict"
+  },
+  "mocoeffs": {
+    "desc": "molecular orbital coefficients",
+    "units": "",
+    "type": "list of arrays of rank 2"
+  },
+  "moenergies": {
+    "desc": "molecular orbital energies",
+    "units": "eV",
+    "type": "list of arrays of rank 1"
+  },
+  "moments": {
+    "desc": "molecular multipole moments",
+    "units": "a.u.",
+    "type": "list of arrays[]"
+  },
+  "mosyms": {
+    "desc": "orbital symmetries",
+    "units": "",
+    "type": "list of lists"
+  },
+  "mpenergies": {
+    "desc": "molecular electronic energies with M\u00f8ller-Plesset corrections",
+    "units": "eV",
+    "type": "array of rank 2"
+  },
+  "mult": {
+    "desc": "multiplicity of the system",
+    "units": "",
+    "type": "integer"
+  },
+  "natom": {
+    "desc": "number of atoms",
+    "units": "",
+    "type": "integer"
+  },
+  "nbasis": {
+    "desc": "number of basis functions",
+    "units": "",
+    "type": "integer"
+  },
+  "nmo": {
+    "desc": "number of molecular orbitals",
+    "units": "",
+    "type": "integer"
+  },
+  "nmrtensors": {
+    "desc": "Nuclear magnetic resonance chemical shielding tensors",
+    "units": "",
+    "type": "dict of dicts of array of rank 2"
+  },
+  "nmrcouplingtensors": {
+    "desc": "Nuclear magnetic resonance spin-spin coupling tensors",
+    "units": "",
+    "type": "dict of dicts of array of rank 2"
+  },
+  "nocoeffs": {
+    "desc": "natural orbital coefficients",
+    "units": "",
+    "type": "array of rank 2"
+  },
+  "nooccnos": {
+    "desc": "natural orbital occupation numbers",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "nsocoeffs": {
+    "desc": "natural spin orbital coefficients",
+    "units": "",
+    "type": "list of array of rank 2"
+  },
+  "nsooccnos": {
+    "desc": "natural spin orbital occupation numbers",
+    "units": "",
+    "type": "list of array of rank 1"
+  },
+  "optdone": {
+    "desc": "flags whether an optimization has converged",
+    "units": "",
+    "type": "Boolean"
+  },
+  "optstatus": {
+    "desc": "optimization status for each set of atomic coordinates",
+    "units": "",
+    "type": "array of rank 1"
+  },
+  "polarizabilities": {
+    "desc": "(dipole) polarizabilities, static or dynamic",
+    "units": "",
+    "type": "list of arrays of rank 2"
+  },
+  "pressure": {
+    "desc": "pressure used for Thermochemistry",
+    "units": "atm",
+    "type": "float"
+  },
+  "rotconsts": {
+    "desc": "rotational constants",
+    "units": "GHz",
+    "type": "array of rank 2"
+  },
+  "scancoords": {
+    "desc": "geometries of each scan step",
+    "units": "angstroms",
+    "type": "array of rank 3"
+  },
+  "scanenergies": {
+    "desc": "energies of potential energy surface",
+    "units": "",
+    "type": "list"
+  },
+  "scannames": {
+    "desc": "names of variables scanned",
+    "units": "",
+    "type": "list of strings"
+  },
+  "scanparm": {
+    "desc": "values of parameters in potential energy surface",
+    "units": "",
+    "type": "list of tuples"
+  },
+  "scfenergies": {
+    "desc": "molecular electronic energies after SCF (Hartree-Fock, DFT)",
+    "units": "eV",
+    "type": "array of rank 1"
+  },
+  "scftargets": {
+    "desc": "targets for convergence of the SCF",
+    "units": "",
+    "type": "array of rank 2"
+  },
+  "scfvalues": {
+    "desc": "current values for convergence of the SCF",
+    "units": "",
+    "type": "list of arrays of rank 2"
+  },
+  "temperature": {
+    "desc": "temperature used for Thermochemistry",
+    "units": "kelvin",
+    "type": "float"
+  },
+  "time": {
+    "desc": "time in molecular dynamics and other trajectories",
+    "units": "fs",
+    "type": "array of rank 1"
+  },
+  "transprop": {
+    "desc": "all absorption and emission spectra (dictionary {name:",
+    "units": "etoscs",
+    "type": "etenergies"
+  },
+  "vibanharms": {
+    "desc": "vibrational anharmonicity constants",
+    "units": "1/cm",
+    "type": "array of rank 2"
+  },
+  "vibdisps": {
+    "desc": "cartesian displacement vectors",
+    "units": "delta angstrom",
+    "type": "array of rank 3"
+  },
+  "vibfreqs": {
+    "desc": "vibrational frequencies",
+    "units": "1/cm",
+    "type": "array of rank 1"
+  },
+  "vibfconsts": {
+    "desc": "force constants of vibrations",
+    "units": "mDyne/angstrom",
+    "type": "array of rank 1"
+  },
+  "vibirs": {
+    "desc": "IR intensities",
+    "units": "km/mol",
+    "type": "array of rank 1"
+  },
+  "vibramans": {
+    "desc": "Raman activities",
+    "units": "A^4/Da",
+    "type": "array of rank 1"
+  },
+  "vibrmasses": {
+    "desc": "reduced masses of vibrations",
+    "units": "daltons",
+    "type": "array of rank 1"
+  },
+  "vibsyms": {
+    "desc": "symmetries of vibrations",
+    "units": "",
+    "type": "list of strings"
+  },
+  "zpve": {
+    "desc": "zero-point vibrational energy correction",
+    "units": "hartree/particle",
+    "type": "float"
+  }
+}

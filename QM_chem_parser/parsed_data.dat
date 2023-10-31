@@ -1,0 +1,365 @@
+</tr>
+>aonames
+atomic orbital names
+
+list of strings
+</tr>
+aooverlaps
+atomic orbital overlap matrix
+
+array of rank 2
+</tr>
+>atombasis
+indices of atomic orbitals on each atom
+
+list of lists
+</tr>
+>atomcharges
+atomic partial charges
+
+dict of arrays of rank 1
+</tr>
+atomcoords">atomcoords
+atom coordinates
+angstroms
+array of rank 3
+</tr>
+atommasses">atommasses
+atom masses
+daltons
+array of rank 1
+</tr>
+atomnos">atomnos
+atomic numbers
+
+array of rank 1
+</tr>
+atomspins">atomspins
+atomic spin densities
+
+dict of arrays of rank 1
+</tr>
+ccenergies">ccenergies
+molecular energies with Coupled-Cluster corrections
+eV
+array of rank 2
+</tr>
+charge">charge
+net charge of the system
+
+integer
+</tr>
+coreelectrons">coreelectrons
+number of core electrons in atom pseudopotentials
+
+array of rank 1
+</tr>
+dispersionenergies">dispersionenergies
+dispersion energy corrections
+eV
+array of rank 1
+</tr>
+enthalpy">enthalpy
+sum of electronic and thermal enthalpies
+hartree/particle
+float
+</tr>
+entropy">entropy
+entropy
+hartree/particle*kelvin
+float
+</tr>
+etenergies">etenergies
+energies of electronic transitions
+1/cm
+array of rank 1
+</tr>
+etoscs">etoscs
+oscillator strengths of electronic transitions
+
+array of rank 1
+</tr>
+etdips">etdips
+electric transition dipoles of electronic transitions
+ebohr
+array of rank 2
+</tr>
+etveldips">etveldips
+velocity-gauge electric transition dipoles of electronic transitions
+ebohr
+array of rank 2
+</tr>
+etmagdips">etmagdips
+magnetic transition dipoles of electronic transitions
+ebohr
+array of rank 2
+</tr>
+etrotats">etrotats
+rotatory strengths of electronic transitions
+??
+array of rank 1
+</tr>
+etsecs">etsecs
+singly-excited configurations for electronic transitions
+
+list of lists
+</tr>
+etsyms">etsyms
+symmetries of electronic transitions
+
+list of string
+</tr>
+freeenergy">freeenergy
+sum of electronic and thermal free energies
+hartree/particle
+float
+</tr>
+fonames">fonames
+fragment orbital names
+
+list of strings
+</tr>
+fooverlaps">fooverlaps
+fragment orbital overlap matrix
+
+array of rank 2
+</tr>
+fragnames">fragnames
+names of fragments
+
+list of strings
+</tr>
+frags">frags
+indices of atoms in a fragment
+
+list of lists
+</tr>
+gbasis">gbasis
+coefficients and exponents of Gaussian basis functions
+
+PyQuante format
+</tr>
+geotargets">geotargets
+targets for convergence of geometry optimization
+
+array of rank 1
+</tr>
+geovalues">geovalues
+current values for convergence of geometry optmization
+
+array of rank 1
+</tr>
+grads">grads
+current values of forces (gradients) in geometry optimization
+
+array of rank 3
+</tr>
+hessian">hessian
+elements of the force constant matrix
+
+array of rank 1
+</tr>
+homos">homos
+molecular orbital indices of HOMO(s)
+
+array of rank 1
+</tr>
+metadata">metadata
+various metadata about the package and computation
+
+dict
+</tr>
+mocoeffs">mocoeffs
+molecular orbital coefficients
+
+list of arrays of rank 2
+</tr>
+moenergies">moenergies
+molecular orbital energies
+eV
+list of arrays of rank 1
+</tr>
+moments">moments
+molecular multipole moments
+a.u.
+list of arrays[]
+</tr>
+mosyms">mosyms
+orbital symmetries
+
+list of lists
+</tr>
+mpenergies">mpenergies
+molecular electronic energies with Møller-Plesset corrections
+eV
+array of rank 2
+</tr>
+mult">mult
+multiplicity of the system
+
+integer
+</tr>
+natom">natom
+number of atoms
+
+integer
+</tr>
+nbasis">nbasis
+number of basis functions
+
+integer
+</tr>
+nmo">nmo
+number of molecular orbitals
+
+integer
+</tr>
+nmrtensors">nmrtensors
+Nuclear magnetic resonance chemical shielding tensors
+
+dict of dicts of array of rank 2
+</tr>
+nmrcouplingtensors">nmrcouplingtensors
+Nuclear magnetic resonance spin-spin coupling tensors
+
+dict of dicts of array of rank 2
+</tr>
+nocoeffs">nocoeffs
+natural orbital coefficients
+
+array of rank 2
+</tr>
+nooccnos">nooccnos
+natural orbital occupation numbers
+
+array of rank 1
+</tr>
+nsocoeffs">nsocoeffs
+natural spin orbital coefficients
+
+list of array of rank 2
+</tr>
+nsooccnos">nsooccnos
+natural spin orbital occupation numbers
+
+list of array of rank 1
+</tr>
+optdone">optdone
+flags whether an optimization has converged
+
+Boolean
+</tr>
+optstatus">optstatus
+optimization status for each set of atomic coordinates
+
+array of rank 1
+</tr>
+polarizabilities">polarizabilities
+(dipole) polarizabilities, static or dynamic
+
+list of arrays of rank 2
+</tr>
+pressure">pressure
+pressure used for Thermochemistry
+atm
+float
+</tr>
+rotconsts">rotconsts
+rotational constants
+GHz
+array of rank 2
+</tr>
+scancoords">scancoords
+geometries of each scan step
+angstroms
+array of rank 3
+</tr>
+scanenergies">scanenergies
+energies of potential energy surface
+
+list
+</tr>
+scannames">scannames
+names of variables scanned
+
+list of strings
+</tr>
+scanparm">scanparm
+values of parameters in potential energy surface
+
+list of tuples
+</tr>
+scfenergies">scfenergies
+molecular electronic energies after SCF (Hartree-Fock, DFT)
+eV
+array of rank 1
+</tr>
+scftargets">scftargets
+targets for convergence of the SCF
+
+array of rank 2
+</tr>
+scfvalues">scfvalues
+current values for convergence of the SCF
+
+list of arrays of rank 2
+</tr>
+temperature">temperature
+temperature used for Thermochemistry
+kelvin
+float
+</tr>
+time">time
+time in molecular dynamics and other trajectories
+fs
+array of rank 1
+</tr>
+transprop">transprop
+all absorption and emission spectra (dictionary {name:
+etoscs
+etenergies
+</tr>
+vibanharms">vibanharms
+vibrational anharmonicity constants
+1/cm
+array of rank 2
+</tr>
+vibdisps">vibdisps
+cartesian displacement vectors
+delta angstrom
+array of rank 3
+</tr>
+vibfreqs">vibfreqs
+vibrational frequencies
+1/cm
+array of rank 1
+</tr>
+vibfconsts">vibfconsts
+force constants of vibrations
+mDyne/angstrom
+array of rank 1
+</tr>
+vibirs">vibirs
+IR intensities
+km/mol
+array of rank 1
+</tr>
+vibramans">vibramans
+Raman activities
+A^4/Da
+array of rank 1
+</tr>
+vibrmasses">vibrmasses
+reduced masses of vibrations
+daltons
+array of rank 1
+</tr>
+vibsyms">vibsyms
+symmetries of vibrations
+
+list of strings
+</tr>
+zpve">zpve
+zero-point vibrational energy correction
+hartree/particle
+float
