@@ -40,14 +40,14 @@ def plot_data(data,files,legend,limx,limy,shade_min,shade_max,wd=15,hg=10):
     if shade_min:
         for k,val in enumerate(shade_min):
             plt.axvspan(val, shade_max[k], color='#989898', alpha=0.5, lw=0)
-    #plt.text(0.25,0.05,"DES",horizontalalignment='center', transform = ax.transAxes)
-    #plt.text(0.75,0.05,"THF",horizontalalignment='center', transform = ax.transAxes)
+    plt.text(0.25,0.05,"DES",horizontalalignment='center', transform = ax.transAxes)
+    plt.text(0.75,0.05,"THF",horizontalalignment='center', transform = ax.transAxes)
     #plt.xticks(np.arange(int(min(data[0]['x'])),int(max(data[0]['x'])),2))
     if legend:
         if legend == "file":
             plt.legend()
         else:
-            plt.legend(args.legend)#,loc='center right')
+            plt.legend(args.legend,loc='center right')
     if limx:
         plt.xlim(limx)
     if limy:
@@ -98,7 +98,29 @@ def integrate_density(data,min,max):
     integral_2=np.trapz(y2,[x[0] for x in x2])
     integral_3=np.trapz(y3,[x[0] for x in x3])
     return(integral_1,integral_2,integral_3)
-    
+
+def integrate_interface_density(data,min,max):
+    x1=[]
+    y1=[]
+    len_interface=sum([abs(x-max[i]) for i,x in enumerate(min)])
+    """
+    for i,item in enumerate(data['x']):
+        if min <= item <= max:
+            x1.append(item)
+            y1.append(data['y'][i])
+        else:
+            x2.append(item)
+            y2.append(data['y'][i])
+    integral_1=np.trapz(y1,[x for x in x1])
+    integral_2=np.trapz(y2,[x for x in x2])
+    """
+    for i,ex in enumerate(min):     
+        x1.append([(x,j) for j,x in enumerate(data['x']) if ex <= x <= max[i]])
+    for k in x1:
+        y1.append([data['y'][x[1]] for x in k]) 
+    integral=[np.trapz(y1[i],[x[0] for x in k]) for i,k in enumerate(x1)]
+    sum_integral=sum(integral) 
+    return(sum_integral,len_interface)
 
 
 parser = argparse.ArgumentParser(description='Plot data')
@@ -127,8 +149,13 @@ for input in inputs:
 if args.intg:
     for i in data:
         integrals.append(integrate_density(i,args.min_intg,args.max_intg))
-        print("Integral_1: {:.2f}, Integral_2: {:.2f},Integral_3: {:.2f}, Min: {}, Max: {}".format(integrals[-1][0],integrals[-1][1],integrals[-1][2],args.min_intg,args.max_intg))
+        print(i['file'])
+        print("Integral_1: {:.2f} Integral_2: {:.2f} Integral_3: {:.2f} Min: {} Max: {}".format(integrals[-1][0],integrals[-1][1],integrals[-1][2],args.min_intg,args.max_intg))
         print(np.trapz(i['y'],i['x']))
+        integral_interface,len_interface=integrate_interface_density(i,args.shade_min,args.shade_max)
+        print(f"Integrated density at the interface(s):{integral_interface:.4f} $nm-3$")
+        print(f"Total length of the interface(s):{len_interface:.4f} nm")
+        print("###########################")
     plot_integrated_density(integrals,files,50)
 plot_data(data,files,args.legend,args.xlim,args.ylim,args.shade_min,args.shade_max)
 

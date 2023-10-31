@@ -625,15 +625,15 @@ font = {'family' : 'sans',
         'weight' : 'normal',
         'size'   : 32}
 mpl.rc('font', **font)
-mols=["ACP","IMC"]
+mols=["ACP"]
 dir="umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX"
 textsize=800
-fraction=2
+fraction=1.5
 a=10.1
 b=11.5
 limx=[9.5,12.0]
 limy=[-1,12]
-arry=15
+arry=10
 bootstrap=True
 graph_data=[extract_umbrella_profile(os.path.join(root_PMF,x,dir),'profile.xvg','histo.xvg') for x in mols]
 if bootstrap:
@@ -760,6 +760,7 @@ plt.xlabel("Z / \AA")
 plt.xlim(limx_all)
 plt.tight_layout()
 plt.savefig(os.path.join(root_ORIENT,'IMC_ORIENT.png'), format='png',bbox_inches = "tight")
+plt.show()
 plt.close()
 # %%
 # %% PLOT RDFS MAXIMA and MINIMA
