@@ -619,11 +619,13 @@ D_ACP,fig_ACP=plot_DENS_gmx(root_DENS_ACP,{"ACP":"ACP_density.xvg"},345,1,["Acet
                             {1:{"min":94,"max":107},2:{"min":204,"max":206},3:{"min":-1,"max":11.7}},
                             {1:{"name":"DES","start":11.7,"end":94,"arry":35},2:{"name":"THF","start":107,"end":204,"arry":35}})
 # %% PLOT PMFS
+clrs=['#0000FF','#FF0000','#00FF00']+list(mpl.colors.TABLEAU_COLORS.keys())
 root_PMF="/home/marco/SHARED/RATIO/WP4/FFs/umbrella/MOD-FRC/BIG/"
 #mols=["IMC","ACT","ACP"]
 font = {'family' : 'sans',
         'weight' : 'normal',
         'size'   : 32}
+mpl.rcParams['axes.linewidth']=3 
 mpl.rc('font', **font)
 mols=["ACP"]
 dir="umbrella_30_200/ANNEALED_BOX/ANNEALED_BOX"
@@ -641,13 +643,13 @@ if bootstrap:
 wd,hg=set_size(textsize,fraction)
 #wd,hg=15,10
 
-fig=plt.figure(figsize=(wd,hg),dpi=150)
+fig=plt.figure(figsize=(wd,hg),dpi=150,frameon=False)
 for i,x in enumerate(graph_data):
-    plt.subplot(len(graph_data),1,i+1)
+    plt.subplot(len(graph_data),1,i+1,facecolor=None)
     #plt.plot([k/10 for k in x[0][0][0]],x[0][0][1],label=mols[i])
     if bootstrap:
         print(min(bs[i][1]))
-        plt.plot([k+5.7 for k in bs[i][0]],[k-min(bs[i][1]) for k in bs[i][1]] ,label=mols[i])
+        plt.plot([k+5.7 for k in bs[i][0]],[k-min(bs[i][1]) for k in bs[i][1]] ,label=mols[i],linewidth=4,color=clrs[i])
         plt.fill_between([x+5.7 for x in bs[i][0]],[k-min(bs[i][1]) for k in bs[i][1]]+bs[i][2],
                          [k-min(bs[i][1]) for k in bs[i][1]]-bs[i][2],alpha=0.3)
         
@@ -655,16 +657,16 @@ for i,x in enumerate(graph_data):
     plt.ylim(limy)
     #plt.legend()
     #plt.annotate(text='', xy=(limx[0],arry), xytext=(a,arry), arrowprops=dict(arrowstyle='<->')) 
-    plt.text((limx[0]+a)/2,arry+arry*0.05,"DES",ha='center')
+    #plt.text((limx[0]+a)/2,arry+arry*0.05,"DES",ha='center')
     #plt.annotate(text='', xy=(b,arry), xytext=(limx[1],arry), arrowprops=dict(arrowstyle='<->'))
-    plt.text((b+limx[1])/2,arry+arry*0.05,"THF",ha='center')
-    plt.axvspan(a, b, color='#989898', alpha=0.5, lw=0)
+    #plt.text((b+limx[1])/2,arry+arry*0.05,"THF",ha='center')
+    #plt.axvspan(a, b, color='#989898', alpha=0.5, lw=0)
     plt.ylabel("Free Energy $(Kj\ mol^{-1})$")
     plt.tight_layout()
 plt.xlabel("Z coordinate (nm)")
 
 
-plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_PMF.png'), format='png',bbox_inches = "tight")
+plt.savefig(os.path.join(root_PMF,'_'.join(mols)+'_PMF.png'), format='png',bbox_inches = "tight",transparent=True)
 
 #PLOT HISTOS
 fig=plt.figure(figsize=(wd,hg*2),dpi=150)

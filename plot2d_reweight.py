@@ -125,10 +125,11 @@ def dim_red(cv1,cv2,free_grid,temp):
 
 def plot2d(x,y,value,file,labx,laby,cmap,minima,maxima):
     fig=plt.figure(figsize=(16,10),dpi=150)
-    font = {'family' : 'sans',
+    font = {'family' : 'Formular',
         'weight' : 'normal',
-        'size'   : 16}
+        'size'   : 30}
     mpl.rc('font', **font)
+    mpl.rcParams['axes.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
     
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
@@ -165,7 +166,7 @@ def plot3d(x,y,value,input,labx,laby):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
-        'size'   : 16}
+        'size'   : 32}
     mpl.rc('font', **font)
     ax = fig.add_subplot(projection='3d')
     x=np.array([x[0] for x in file]).reshape(len(x),len(y),order='F')
@@ -183,8 +184,9 @@ def plotminpath(min_path_cv1,min_path_cv2,file):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
-        'size'   : 16}
+        'size'   : 32}
     mpl.rc('font', **font)
+    mpl.rcParams['axes.linewidth'] = 3
     try:
         cv1=np.loadtxt("fes-rew_square_sparse_cv1.dat")
         #print(cv1)
@@ -213,7 +215,7 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
-        'size'   : 16}
+        'size'   : 32}
     mpl.rc('font', **font)
     plt.plot(cv1,min_path_cv1,label="CV1")
     plt.plot(cv2,min_path_cv2,label="CV2")
@@ -229,12 +231,19 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
 def main():
 
     cv1,cv2,free_grid=extract_data(sys.argv[1])
-    print(cv1)
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
     laby=sys.argv[3]
-    #cmap_active=LinearSegmentedColormap.from_list("mycmap",["#000000","#2b38ff","#17d9ff","#f7059b"])
-    cmap_active='jet'
+    cmap_active=ListedColormap(np.linspace([0.16862745098, 0.219607843137,1,1],[1, 1,1,1],12)) #blue
+    #cmap_active=ListedColormap(np.linspace([1.0, 0.40784313725490196,0,1],[1, 1,1,1],12)) #orange
+    #cmap_active=ListedColormap(np.linspace([0.1960784313725490, 0.7686274509803922,0.4980392156862745,1],[1, 1,1,1],12)) #green
+    0.1960784313725490
+    
+    #0.16862745098, 0.219607843137,1
+    #cmap_active=LinearSegmentedColormap.from_list("mycmap",["#2b38ff","#FFFFFF"])#"#24BC99","#D6BB61","#E18F26","#FF6800"])
+                                                  #oldcmap"#000000","#2b38ff","#17d9ff","#f7059b"])
+                                                  
+    #cmap_active='Blues_r'
     #path=minpath(free_grid,1,1,2,2)
     min_path_cv1,min_path_cv2=get_minimum_path(cv1,cv2,free_grid)
     reduced_fes_1,reduced_fes_2=dim_red(cv1,cv2,free_grid,300)

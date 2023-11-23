@@ -19,7 +19,7 @@ def extract_data(input,split):
         with open("{}/plumed.dat".format(os.path.dirname(i)),'r') as ifile:
             lines=ifile.readlines()
             for line in lines:
-                if 'RESTRAINT' in line:
+                if 'restraint:' in line:
                     data[i]['pos']=float(line.split()[-2].split('=')[-1])
                     data[i]['kappa']=float(line.split()[-1].split('=')[-1])
     if split:

@@ -13,6 +13,7 @@ from cclib.scripts.ccget import ccget
 from cclib.parser import logfileparser
 import io
 from tech_parse import parse_tech
+import pandas as pd
 
 class NumpyAwareJSONEncoder(json.JSONEncoder):
     """A encoder for numpy.ndarray's obtained from the cclib attributes.
@@ -463,7 +464,11 @@ def main():
     output_pars.add_argument('-i', '--index',
                         type=int,
                         default=None,
-                        help='optional zero-based index for which structure to extract')
+                        help='optional zero-based index to extract a specific element of the property array')
+    output_pars.add_argument('-c', '--cols',
+                        default=False,
+                        action='store_true',
+                        help='columns layout')
     
         
     args = parser.parse_args()
@@ -574,9 +579,34 @@ def main():
                                 
                 props_all.append(props)
 
-    prop_string=["Name"] + [x for x in args.prop]
-    
+    prop_string=["Name"] + [f"{x}" for x in args.prop]
+    prop_string_unit=[[" "] + [pdata[x]['units'] for x in args.prop]]
+    print(prop_string)
+    print(prop_string_unit)
+    datf_units=pd.DataFrame(prop_string_unit,columns=prop_string)
+    datf_props=pd.DataFrame(props_all,columns=prop_string)
+    datf=pd.concat([datf_units,datf_props])
+    print(datf_props)
+    #print(datf[datf['Name']=="2rings_DHI.log"]['etenergies'])
+    pd.DataFrame.to_excel(datf,"Properties.xlsx")
     with open("Properties.csv",'w') as ofile:
+      if args.cols:
+        name="Name"
+        ofile.write(f"{name:30s}")
+        for prop in range(len(props_all[0])):
+          if prop_string[prop] in list(pdata.keys()):
+                    string=f"{prop_string[prop]} ({pdata[prop_string[prop]]['units']})"
+                    ofile.write(f"{string:30s}")
+          for comp in props_all:
+            if isinstance(comp[prop],list):
+                    new=comp[prop].tolist()
+                    for subprop in new:
+                        ofile.write(f"{subprop};")
+            else:
+                    ofile.write(f"@{comp[prop]}")
+          ofile.write("\n")
+        
+      else:
         for line in props_all:
             for i,prop in enumerate(line):
                 if prop_string[i] in list(pdata.keys()):

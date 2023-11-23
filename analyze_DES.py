@@ -1111,7 +1111,8 @@ prova_h,prova_ed=np.histogram(a,bins=10,range=(0,10))
 plt.plot(prova_ed[:-1],prova_h)
 
 # %% DIFFUSIVITY CHECK
-root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/1.0mmol"
+#root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/AcPh/ANNEALING/0.2mmol_DESOnly"
+root="/home/marco/SHARED/RATIO/WP4/MD/MOD-FRC/BIG/DES/ANNEALED_BOX"
 with open(os.path.join(root,'msd.xvg'),'r') as ifile:
     vars=[]
     MSD={}
@@ -1137,5 +1138,7 @@ for res in MSD:
     
 
     
+
+1# %%
 
 # %%
