@@ -469,6 +469,12 @@ def main():
                         default=False,
                         action='store_true',
                         help='columns layout')
+    output_pars.add_argument('-m', '--meta',
+                        default=["concise"],
+                        type=str,
+                        nargs='+',
+                        help='Metadata to print. Accepts one of the values in the dict. Full prints all metadata\
+                        and concise a selection of the most common parameters')
     
         
     args = parser.parse_args()
@@ -505,6 +511,7 @@ def main():
     index = args.index
     ghost = args.ghost
     props_all=[]
+    concise_metadata=["methods","functional","basis_set","success"]
 
     for filename in files:
         technical=parse_tech(filename,files[filename])
@@ -565,22 +572,29 @@ def main():
             
             else:
                 props=[filename]
+                print(args.meta)
+                if args.meta[0] == 'full':
+                    props.append(getattr(data,'metadata'))
+                elif args.meta[0] == 'concise':
+                  args.meta=concise_metadata
+                  for tech in concise_metadata:
+                    props.append(getattr(data,'metadata')[tech])
+                else:
+                  for tech in args.meta:
+                    props.append(getattr(data,'metadata')[tech])
                 for prop in args.prop:
-                    if prop == "technical":
-                        props.append(technical[0])
-                    else:
+                    try:
+                        props.append(getattr(data,prop)[args.index])
+                    except:
                         try:
-                            props.append(getattr(data,prop)[args.index])
+                            props.append(getattr(data,prop))
                         except:
-                            try:
-                                props.append(getattr(data,prop))
-                            except:
-                                print(f"{prop} not found for {filename}")
+                            print(f"{prop} not found for {filename}")
                                 
                 props_all.append(props)
-
-    prop_string=["Name"] + [f"{x}" for x in args.prop]
-    prop_string_unit=[[" "] + [pdata[x]['units'] for x in args.prop]]
+    print(props_all)
+    prop_string=["Name"]+ [x for x in args.meta] + [f"{x}" for x in args.prop]
+    prop_string_unit=[[" "] + [x for x in args.meta] + [pdata[x]['units'] for x in args.prop]]
     print(prop_string)
     print(prop_string_unit)
     datf_units=pd.DataFrame(prop_string_unit,columns=prop_string)
@@ -599,8 +613,7 @@ def main():
                     ofile.write(f"{string:30s}")
           for comp in props_all:
             if isinstance(comp[prop],list):
-                    new=comp[prop].tolist()
-                    for subprop in new:
+                    for subprop in comp[prop]:
                         ofile.write(f"{subprop};")
             else:
                     ofile.write(f"@{comp[prop]}")
