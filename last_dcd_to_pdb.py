@@ -55,13 +55,33 @@ def lastdcd_to_qmmm(topo,trj,sel):
             ofile.write("&END QM_KIND\n")
     return()
 
+def get_avg_Cl(Cl1,Cl2,topo,trj):
+    u = mda.Universe(topo,trj,in_memory=True)
+    val=trj.split('-')[0].split('_')[-1]
+    u.trajectory[-1]
+    Cl1_sel=u.select_atoms(f"name Cl1 and resid {Cl1}")
+    Cl2_sel=u.select_atoms(f"name Cl1 and resid {Cl2}")
+    Cl1_pos=Cl1_sel.positions[0]
+    Cl2_pos=Cl2_sel.positions[0]
+    avg=(Cl1_pos+Cl2_pos)/2
+    return(Cl1_pos,Cl2_pos,avg)
+    
+    
+    
 
 
 topo=sys.argv[1]
 inputs=glob.glob(sys.argv[2])
 print(inputs)
-sel='resid 44 or (not resname IM2 and byres around 8 index 1636)'
+
+
+#sel='resid 4 44 or (not resname IM2 and byres around 8 index 1636)'
+
 
 for input in inputs:
+    Cl1_pos,Cl2_pos,avg=get_avg_Cl(4,44,topo,input)
+    Cl_avg_pos=" ".join([str(x) for x in avg])
+    sel=f"resid 4 44 or (not resname IM2 and byres point {Cl_avg_pos} 8.0)"
     print(input)
+    print(Cl1_pos,Cl2_pos,Cl_avg_pos)
     lastdcd_to_qmmm(topo,input,sel)

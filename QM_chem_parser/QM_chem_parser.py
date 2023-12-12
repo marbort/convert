@@ -464,6 +464,7 @@ def main():
     output_pars.add_argument('-i', '--index',
                         type=int,
                         default=None,
+                        nargs='+',
                         help='optional zero-based index to extract a specific element of the property array')
     output_pars.add_argument('-c', '--cols',
                         default=False,
@@ -490,7 +491,14 @@ def main():
             filenames+=glob.glob(file,recursive=True)
         else:
             filenames+=glob.glob(file)
-    print(filenames)
+    prp_print=[]
+    for i,prp in enumerate(args.prop):
+      try:
+        prp_print.append((prp,args.index[i]))
+      except:
+        prp_print.append((prp,"all"))
+    print(f"Properties (requested, index): {prp_print} ")
+    print(f"Files Found: {len(filenames)}")
     files=dict()
     for file in filenames:
         try:
@@ -572,19 +580,25 @@ def main():
             
             else:
                 props=[filename]
-                print(args.meta)
+                #print(args.meta)
                 if args.meta[0] == 'full':
                     props.append(getattr(data,'metadata'))
                 elif args.meta[0] == 'concise':
                   args.meta=concise_metadata
                   for tech in concise_metadata:
-                    props.append(getattr(data,'metadata')[tech])
+                    try:
+                      props.append(getattr(data,'metadata')[tech])
+                    except:
+                      props.append("not found")
                 else:
                   for tech in args.meta:
-                    props.append(getattr(data,'metadata')[tech])
-                for prop in args.prop:
                     try:
-                        props.append(getattr(data,prop)[args.index])
+                      props.append(getattr(data,'metadata')[tech])
+                    except:
+                      props.append("not found")
+                for i,prop in enumerate(args.prop):
+                    try:
+                        props.append(getattr(data,prop)[args.index[i]])
                     except:
                         try:
                             props.append(getattr(data,prop))
@@ -592,15 +606,15 @@ def main():
                             print(f"{prop} not found for {filename}")
                                 
                 props_all.append(props)
-    print(props_all)
+    #print(props_all)
     prop_string=["Name"]+ [x for x in args.meta] + [f"{x}" for x in args.prop]
     prop_string_unit=[[" "] + [x for x in args.meta] + [pdata[x]['units'] for x in args.prop]]
-    print(prop_string)
-    print(prop_string_unit)
+    #print(prop_string)
+    #print(prop_string_unit)
     datf_units=pd.DataFrame(prop_string_unit,columns=prop_string)
     datf_props=pd.DataFrame(props_all,columns=prop_string)
     datf=pd.concat([datf_units,datf_props])
-    print(datf_props)
+    #print(datf_props)
     #print(datf[datf['Name']=="2rings_DHI.log"]['etenergies'])
     pd.DataFrame.to_excel(datf,"Properties.xlsx")
     with open("Properties.csv",'w') as ofile:
@@ -635,7 +649,7 @@ def main():
                 ofile.write("\n")
             ofile.write("\n")
     
-    print(f"Files found: {len(files)}")        
+    #print(f"Files found: {len(files)}")        
     print(f"Files correctly parsed: {len(props_all)}")
                         
         

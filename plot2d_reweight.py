@@ -130,12 +130,13 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,maxima):
         'size'   : 30}
     mpl.rc('font', **font)
     mpl.rcParams['axes.linewidth'] = 3
+    mpl.rcParams['lines.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
-    
+    MAX=100
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
-    lev=range(0,1000,5)
-    plt.contourf(x, y,value,lev,vmin=0,vmax=50,cmap=cmap)
+    lev=range(0,MAX+2,2)
+    plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
     ###
     
     #kcal/mol plot
@@ -150,8 +151,8 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,maxima):
     #cbar=plt.colorbar(label="$\Delta A\ (kcal\ mol^{-1})$",ticks=range(0,11,1))
     #cbar.ax.set_ylim(0,10)
     #cbar kj/mol
-    cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,60,10))
-    cbar.ax.set_ylim(0,50)
+    cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+MAX//10,MAX//10))
+    cbar.ax.set_ylim(0,MAX)
     #for i in minpath:
     #    plt.scatter(x[i[0]],y[i[1]],color='black')
     #plt.scatter(x[minima[0]],y[minima[1]])
@@ -221,8 +222,8 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     plt.plot(cv2,min_path_cv2,label="CV2")
     plt.xlabel("CV")
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
-    plt.xlim([0.5,4.0])
-    plt.ylim([-1.,50.0])
+    #plt.xlim([0.5,4.0])
+    #plt.ylim([-1.,50.0])
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('{}_reduced.png'.format(file),format='png')
@@ -234,7 +235,8 @@ def main():
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
     laby=sys.argv[3]
-    cmap_active=ListedColormap(np.linspace([0.16862745098, 0.219607843137,1,1],[1, 1,1,1],12)) #blue
+    cmap_active='jet'
+    #cmap_active=ListedColormap(np.linspace([0.16862745098, 0.219607843137,1,1],[1, 1,1,1],12)) #blue
     #cmap_active=ListedColormap(np.linspace([1.0, 0.40784313725490196,0,1],[1, 1,1,1],12)) #orange
     #cmap_active=ListedColormap(np.linspace([0.1960784313725490, 0.7686274509803922,0.4980392156862745,1],[1, 1,1,1],12)) #green
     0.1960784313725490
