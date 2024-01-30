@@ -40,7 +40,14 @@ for file in sorted(os.listdir('./')):
                    with open("SI.txt",'a') as sifile:
                        sifile.write(basname+'\n')
                        #sifile.write('{}\n'.format(data.natom))
-                       sifile.write('Total Energy={:.5f} Ha\nNimag=0 \n'.format(data.scfenergies[-1]/27.2114))   
+                       sifile.write(f"Electronic Energy={data.scfenergies[-1]/27.2114:.5f} Ha\n")
+                       try:
+                        sifile.write(f"Sum of electronic and thermal enthalpies: {data.enthalpy:5f} Ha\n")
+                        sifile.write(f"Sum of electronic and thermal free energy: {data.freeenergy:5f} Ha\n")
+                        sifile.write(f"Lowest Frequency: {data.vibfreqs[0]:3f} 1/cm\n")
+                       except:
+                           pass
+                          
                        for i in range(len(fullcrd)):
                            sifile.write(f'{fullcrd[i][0]:4s}  ')
                            for k in range(len(fullcrd[i][1])):

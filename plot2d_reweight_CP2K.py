@@ -13,76 +13,15 @@ import scipy.ndimage.morphology as morphology
 import scipy.ndimage 
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
+"""
+Takes a fes.dat input from CP2K graph tool and rescales the energy 
+making the minimum a 0 and converting the values from Ha to Kj/mol
+"""
+ha_to_kjmol=2625.5
+    
 
 sys.path.append('/home/marco/SHARED/GitHub/mepfinder/mepfinder')
 from  flooder import Flooder
-
-
-# Python3 program to illustrate 
-# Saddle point
- 
-# Method to find saddle point
-def findSaddlePoint(mat, n):
-   
-    # Process all rows one 
-    # by one
-    for i in range(n):
-       
-        # Find the minimum element
-        # of row i.
-        # Also find column index of 
-        # the minimum element
-        min_row = mat[i][0];
-        col_ind = 0;
-        for j in range(1, n):
-            if (min_row > mat[i][j]):
-                min_row = mat[i][j];
-                col_ind = j;
- 
-        # Check if the minimum element
-        # of row is also the maximum 
-        # element of column or not
-        k = 0;
-        for k in range(n):
- 
-            # Note that col_ind is fixed
-            if (min_row < mat[k][col_ind]):
-                break;
-            k += 1;
- 
-        # If saddle point present in this 
-        # row then print
-        if (k == n):
-            print("Value of Saddle Point ", 
-                  min_row);
-            return True;
- 
-    # If Saddle Point found
-    return False;
-
-def allSaddles(matrix):
-    rowmins = []
-    rowmaxs = []
-    colmins = []
-    colmaxs = []
-
-    for i,row in enumerate(matrix):
-        m = min(row)
-        M = max(row)
-        for j,x in enumerate(row):
-            if x == m: rowmins.append((i,j))
-            if x == M: rowmaxs.append((i,j))
-
-    t = [list(column) for column in zip(*matrix)] #transpose of matrix
-
-    for j,col in enumerate(t): 
-        m = min(col)
-        M = max(col)
-        for i,x in enumerate(col):
-            if x == m: colmins.append((i,j))
-            if x == M: colmaxs.append((i,j))
-
-    return (set(rowmins) & set(colmaxs)) | (set(rowmaxs) & set(colmins))
 
 def detect_local_minima(arr):
     # https://stackoverflow.com/questions/3684484/peak-detection-in-a-2d-array/3689710#3689710
@@ -117,20 +56,21 @@ def detect_local_minima(arr):
     detected_minima = local_min ^ eroded_background
     return np.where(detected_minima)       
 
-def extract_data(input):
+def extract_data(input,ncvs:int):
     data=[]
-    
+    cvs=[]
     
     with open(input,'r') as ifile:
-        file=np.loadtxt(ifile)
-    cv1_temp=np.array([x[0] for x in file])
-    cv2_temp=np.array([x[1] for x in file])
-    cv1=np.unique(cv1_temp)
-    cv2=np.unique(cv2_temp)
-    val=np.array([x[2] for x in file])
-    free_grid=val.reshape(len(cv1),len(cv2))
+        file=np.loadtxt(ifile,unpack=True)
+    
+    for i in range(ncvs):
+        cvs.append(np.unique(file[i]))
+    min=np.min(file[-1])
+    val=np.subtract(file[-1],min)*ha_to_kjmol
+    free_grid=val.reshape(len(cvs[0]),len(cvs[1]))
     min_pt=detect_local_minima(free_grid)
-    return(cv1,cv2,free_grid,min_pt)
+        
+    return(cvs,free_grid,min_pt)
         
 
 def get_minimum_path(cv1,cv2,free_grid):
@@ -190,7 +130,7 @@ def dim_red(cv1,cv2,free_grid,temp):
     
 
 
-def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
+def plot2d(x,y,value,file,labx,laby,cmap,minima):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'Formular',
         'weight' : 'normal',
@@ -199,12 +139,12 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     mpl.rcParams['axes.linewidth'] = 3
     mpl.rcParams['lines.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
-    MAX=200
+    MAX=100
     
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
     lev=range(0,MAX+5,5)
-    plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
+    plt.contourf(y, x,value,lev,vmin=0,vmax=MAX,cmap=cmap)
     ###
     
     #kcal/mol plot
@@ -227,29 +167,15 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     #plt.scatter(x[maxima[0]],y[maxima[1]],color='red')
     #plt.xlim([0.75,3.25])
     #plt.ylim([0.75,3.25])
-    if len(minima) > 0:
+    if minima:
         min_crd=[]
         with open(minima,'r') as ifile:
             lines=ifile.readlines()
         for line in lines:
             min_crd.append((int(line.split()[1]),float(line.split()[5]),float(line.split()[-1])))
+        print(min_crd)
         for pt in min_crd:
-            plt.scatter(pt[1],pt[2],color='white')
-    good_minima=[]
-    try:
-        for i,item in enumerate(min_pt[0]):
-            if value[item,min_pt[1][i]] > 80:
-                pass
-            else:
-                good_minima.append((x[min_pt[1][i]],y[item],value[item][min_pt[1][i]]))
-                #plt.scatter(x[min_pt[1][i]],y[item],color='red')
-        with open('minima.dat','w') as ofile:
-            for i in good_minima:
-                ofile.write(" ".join([f"{j:10.4f}" for j in i])+"\n")
-    except:
-        print("No minima found. Skipping")
-        pass
-        
+            plt.scatter(pt[1],pt[2])
     plt.savefig('{}.png'.format(file),format='png')
 
 def plot3d(x,y,value,input,labx,laby):
@@ -303,14 +229,20 @@ def plotminpath(min_path_cv1,min_path_cv2,file):
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('{}_minpath.png'.format(file),format='png')
     
-def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
+def plot_reduced(fes1,fes2,file):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
         'size'   : 32}
     mpl.rc('font', **font)
-    plt.plot(cv1,min_path_cv1,label="CV1")
-    plt.plot(cv2,min_path_cv2,label="CV2")
+    with open(fes1,'r') as ifile1:
+        file1=np.loadtxt(ifile1,unpack=True)
+    with open(fes2,'r') as ifile2:
+        file2=np.loadtxt(ifile2,unpack=True)
+    scaled1=np.subtract(file1[1],np.min(file1[1]))*ha_to_kjmol
+    scaled2=np.subtract(file2[1],np.min(file2[1]))*ha_to_kjmol
+    plt.plot(file1[0],scaled1,label="CV1")
+    plt.plot(file2[0],scaled2,label="CV2")
     plt.xlabel("CV")
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
@@ -320,20 +252,16 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     plt.savefig('{}_reduced.png'.format(file),format='png')
     
 
+
 def main():
 
-    cv1,cv2,free_grid,min_pt=extract_data(sys.argv[1])
-    print(cv1[min_pt[1][0]],cv2[min_pt[0][0]],free_grid[min_pt[0][0],min_pt[1][0]])
+    cvs,free_grid,min_pt=extract_data(sys.argv[1],2)
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
     laby=sys.argv[3]
-    try:
-        minima=sys.argv[4]
-    except:
-        minima=""
+    minima=sys.argv[4]
+    print(minima)
     cmap_active='jet'
-    saddle=allSaddles(free_grid)
-    print(saddle)
     #cmap_active=ListedColormap(np.linspace([0.16862745098, 0.219607843137,1,1],[1, 1,1,1],12)) #blue
     #cmap_active=ListedColormap(np.linspace([1.0, 0.40784313725490196,0,1],[1, 1,1,1],12)) #orange
     #cmap_active=ListedColormap(np.linspace([0.1960784313725490, 0.7686274509803922,0.4980392156862745,1],[1, 1,1,1],12)) #green
@@ -345,14 +273,14 @@ def main():
                                                   
     #cmap_active='Blues_r'
     #path=minpath(free_grid,1,1,2,2)
-    min_path_cv1,min_path_cv2=get_minimum_path(cv1,cv2,free_grid)
-    reduced_fes_1,reduced_fes_2=dim_red(cv1,cv2,free_grid,300)
+    #min_path_cv1,min_path_cv2=get_minimum_path(cv1,cv2,free_grid)
+    #reduced_fes_1,reduced_fes_2=dim_red(cv1,cv2,free_grid,300)
     #minima=detect_local_minima(free_grid)
     #maxima=detect_local_minima(-free_grid)
-    plot2d(cv1,cv2,free_grid,file,labx,laby,cmap_active,minima,min_pt)
-    plot3d(cv1,cv2,free_grid,file+'.dat',labx,laby)
+    plot2d(cvs[0],cvs[1],free_grid,file,labx,laby,cmap_active,minima)
+    #plot3d(cv1,cv2,free_grid,file+'.dat',labx,laby)
     #plotminpath(min_path_cv1,min_path_cv2,file)
-    plot_reduced(cv1,cv2,reduced_fes_1,reduced_fes_2,file)
+    plot_reduced('fes1.dat','fes2.dat',file)
 
 if __name__ == "__main__":
     main()

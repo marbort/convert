@@ -33,19 +33,19 @@ def lastdcd_to_qmmm(topo,trj,sel):
     for i,idx in enumerate(atom_idx):
         QMmm_atoms[atom_elm[i]].append(idx+1)
     intervals=list(intervals_extract(atom_idx))
-    chrg=len(QMmm_atoms['MG'])+len(QMmm_atoms['N'])-len(QMmm_atoms['CL'])
-    with open(f"vmd_index_{val}_{chrg}.dat",'w') as ofile:
+    #chrg=len(QMmm_atoms['MG'])+len(QMmm_atoms['N'])-len(QMmm_atoms['CL'])
+    with open(f"vmd_index_{val}.dat",'w') as ofile:
         for interval in intervals:
             try:
                 ofile.write(f"{interval[0]} to {interval[1]} ")
             except:
                 ofile.write(f"{interval[0]} ")
-    with open(f"residues_{val}_{chrg}.dat",'w') as ofile:
+    with open(f"residues_{val}.dat",'w') as ofile:
         for resid in QMmm_residues:
                 ofile.write(f"{resid} ")
 
 
-    with open(f'QMMM_atoms_{val}_{chrg}.dat','w') as ofile:
+    with open(f'QMMM_atoms_{val}.dat','w') as ofile:
         for i in QMmm_atoms:
             ofile.write("&QM_KIND {}\n ".format(i))
             ofile.write("MM_INDEX ")
@@ -72,7 +72,7 @@ def get_avg_Cl(Cl1,Cl2,topo,trj):
 
 topo=sys.argv[1]
 inputs=glob.glob(sys.argv[2])
-radius=sys.argv[3]
+
 print(inputs)
 
 
@@ -83,7 +83,7 @@ for input in inputs:
     Cl1_pos,Cl2_pos,avg=get_avg_Cl(4,44,topo,input)
     Cl_avg_pos=" ".join([str(x) for x in avg])
     #sel=f"byres point {Cl_avg_pos} 8.0"
-    sel=f"resid 4 44 or (not resname IM2 and (byres point {Cl_avg_pos} {radius} and not resid 6223))"
+    sel=f"resid 4 44 6431"
     print(input)
     print(Cl1_pos,Cl2_pos,Cl_avg_pos)
     lastdcd_to_qmmm(topo,input,sel)

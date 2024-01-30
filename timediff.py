@@ -1,36 +1,35 @@
 from datetime import datetime
 import argparse
 
-parser = argparse.ArgumentParser(
+
+
+
+
+def time_diff(start,end):
+    # start time
+    start_time = start
+    end_time = end
+
+    # convert time string to datetime
+    t1 = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
+    t2 = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S")
+    delta = t2 - t1
+    return(t1,t2,delta)
+
+def main():
+    parser = argparse.ArgumentParser(
                     prog='TimeDiff',
                     description='Calculate time difference in seconds',
                     epilog='Time is nothing, timing is everything')
-
-  
-parser.add_argument('--start', type=str, help='Start time (HH:MM:SS)')
-parser.add_argument('--end', type=str, help='End time (HH:MM:SS)')
-
-args = parser.parse_args()
-
-
-# start time
-start_time = args.start
-end_time = args.end
-
-# convert time string to datetime
-t1 = datetime.strptime(start_time, "%H:%M:%S")
-print('Start time:', t1.time())
-
-t2 = datetime.strptime(end_time, "%H:%M:%S")
-print('End time:', t2.time())
-
-# get difference
-delta = t2 - t1
-
-if delta.total_seconds() < 0:
-    print(f"Time difference is {86400 + delta.total_seconds()} seconds")
-
-else:
-    # time difference in seconds
+    parser.add_argument('--start', type=str, help='Start time (YYYY-MM-DD HH:MM:SS)')
+    parser.add_argument('--end', type=str, help='End time (YYYY-MM-DD HH:MM:SS)')
+    args = parser.parse_args()
+    t1,t2,delta=time_diff(args.start,args.end)
+    print('Start time:', t1)
+    print('End time:', t2)
     print(f"Time difference is {delta.total_seconds()} seconds")
 
+if __name__=="__main__":
+    main()
+    
+    

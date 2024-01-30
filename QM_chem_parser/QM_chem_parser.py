@@ -606,17 +606,17 @@ def main():
                             print(f"{prop} not found for {filename}")
                                 
                 props_all.append(props)
-    #print(props_all)
+
     prop_string=["Name"]+ [x for x in args.meta] + [f"{x}" for x in args.prop]
     prop_string_unit=[[" "] + [x for x in args.meta] + [pdata[x]['units'] for x in args.prop]]
-    #print(prop_string)
-    #print(prop_string_unit)
+   
     datf_units=pd.DataFrame(prop_string_unit,columns=prop_string)
     datf_props=pd.DataFrame(props_all,columns=prop_string)
     datf=pd.concat([datf_units,datf_props])
-    #print(datf_props)
-    #print(datf[datf['Name']=="2rings_DHI.log"]['etenergies'])
     pd.DataFrame.to_excel(datf,"Properties.xlsx")
+    
+    ##OLDER csv style output DEPRECATED#####
+    """
     with open("Properties.csv",'w') as ofile:
       if args.cols:
         name="Name"
@@ -648,8 +648,8 @@ def main():
                     ofile.write(f"{prop}")
                 ofile.write("\n")
             ofile.write("\n")
+    """
     
-    #print(f"Files found: {len(files)}")        
     print(f"Files correctly parsed: {len(props_all)}")
                         
         
