@@ -1,3 +1,4 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -204,6 +205,9 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
     lev=range(0,MAX+5,5)
+    
+    CLines=plt.contour(x, y,value,levels=range(0,80,20),vmin=0,vmax=MAX,linewidths=1,colors='white')
+    plt.clabel(CLines,levels=range(0,80,20), inline=True, fontsize=10,colors='white')
     plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
     ###
     
@@ -214,6 +218,7 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     
     plt.xlabel(labx)
     plt.ylabel(laby)
+    plt.xticks(np.arange(min(x),max(x)+0.5,0.5))
     #bounds=[1,2,3,4]
     #cbarkcal
     #cbar=plt.colorbar(label="$\Delta A\ (kcal\ mol^{-1})$",ticks=range(0,11,1))
@@ -238,7 +243,7 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     good_minima=[]
     try:
         for i,item in enumerate(min_pt[0]):
-            if value[item,min_pt[1][i]] > 80:
+            if value[item,min_pt[1][i]] > 60:
                 pass
             else:
                 good_minima.append((x[min_pt[1][i]],y[item],value[item][min_pt[1][i]]))
@@ -314,7 +319,7 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     plt.xlabel("CV")
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
-    #plt.ylim([-1.,50.0])
+    plt.ylim([-1.,150.0])
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('{}_reduced.png'.format(file),format='png')

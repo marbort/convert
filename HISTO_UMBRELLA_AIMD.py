@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 
-def extract_data(input,split,sep,field):
+def extract_data(input,split,sep,field,restart):
     data={}
     #print(glob.glob('*.metadynLog'))
     for i in glob.glob('{}'.format(input)):
@@ -15,7 +15,11 @@ def extract_data(input,split,sep,field):
         for line in lines:
             data[i]['cv'].append(float(line.split()[1]))
         pos=i.split('-')[0].split(sep)[field]
-        with open("cp2k_{}.inp".format(pos)) as cpinp:
+        if restart:
+            cp2k_input=f"cp2k_{pos}_rst.inp"
+        else:
+            cp2k_input=f"cp2k_{pos}.inp"
+        with open(cp2k_input,'r') as cpinp:
             lines=cpinp.readlines()
             for line in lines:
                 if 'K [' in line:
@@ -63,16 +67,18 @@ def plot_data(data,fac,label,plot_gauss,wd=15,hg=10):
         kt=2.479
         mu=data[i]['pos']
         sigma=np.sqrt(kt/(data[i]['kappa']))
-        gauss_range=np.linspace((mu-0.5)*fac,(mu+0.5)*fac,100)
+        print("{} Sigma= {}".format(i,sigma))
+        gauss_range=np.linspace((mu-0.5),(mu+0.5),100)
         gauss=1/(sigma * np.sqrt(2 * np.pi)) * np.exp( - (gauss_range - mu)**2 / (2 * sigma**2) )
         #print(np.exp((data[i]['edges'] - mu)**2 / (2 * sigma)))
         #gauss=[len(data[i]['hist'])*np.exp(-data[i]['kappa']*(x-data[i]['pos'])**2) for x in data[i]['edges']*fac]
         width=(max(data[i]['edges'])*fac-min(data[i]['edges'])*fac)/len(data[i]['edges'])
         plt.bar([x*fac for x in data[i]['edges']],data[i]['hist'],width=width,alpha=0.3,color="C{}".format(j))
         if plot_gauss:
+            #print(gauss_range)
             plt.plot(gauss_range,gauss,color="C{}".format(j))
     if label==False:
-        plt.legend([x for x in data],bbox_to_anchor=(1,1))
+        plt.legend([x for x in data],bbox_to_anchor=(-0.5,1),ncols=2)
     plt.xlabel("CV")
     plt.ylabel("Counts")
     plt.tight_layout()
@@ -92,11 +98,11 @@ def main():
     parser.add_argument('--fac' , dest='fac', help='CV conversion factor',default=1, type=float)
     parser.add_argument('--sep' , dest='sep',type=str,help='file name separator to extract position of restraint. Default -',default='-')
     parser.add_argument('--field' , dest='field',type=int,help='field number where position of restraint is in file name. Default 4.',default=4)
-    
+    parser.add_argument('--restart',action='store_true', default=False,help='take force constant from cp2k_pos_rst')
     
    
     args = parser.parse_args()
-    data=extract_data(args.input,args.split,args.sep,args.field)
+    data=extract_data(args.input,args.split,args.sep,args.field,args.restart)
     if args.plot:
         plot_data(data,args.fac,args.nolabel,args.gauss)
         

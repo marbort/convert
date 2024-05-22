@@ -1,7 +1,8 @@
 import numpy as np
 import sys
 
-type_map={"C":1,"O":2,"H":3,"Mg":4,"Cl":5}
+#type_map={"C":1,"O":2,"H":3,"Mg":6,"Cl":4,"Li":5}
+type_map={"C":1,"O":2,"H":3,"Mg":4,"Cl":5,"Li":6}
 
 
 elm,x,y,z=np.loadtxt(sys.argv[1],unpack=True,skiprows=2,dtype=str)

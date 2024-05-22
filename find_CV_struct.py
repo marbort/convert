@@ -55,15 +55,21 @@ args = parser.parse_args()
 
 
 results,idx,cv_ok_full,cv_both_full=find_values(args.input,args.CVs,args.val,args.tol)
-for i,item in enumerate(cv_ok_full):
-    print(f"#### CV1={item[0]}  CV2={item[1]}")
-    print(f"Number of points that satisfy {args.CVs[0]}: {len(item[2][0])}")
-    print(f"Number of points that satisfy {args.CVs[1]}: {len(item[2][1])}")
-    print(f"Structures that satisfy both criteria: {len(cv_both_full[i][2])}")
-    if len(cv_both_full[i][2]) > 0:
-        for k in cv_both_full[i][2]:
-            print(f"Structure {k[0]} with {args.CVs[0]} value {results[k[0]][idx[0]]:.4f} "
-                  f"and {args.CVs[1]} value {results[k[0]][idx[1]]:.4f}")
+with open('structure_minima.dat','w') as ofile:
+    with open('structures.dat','w') as ofile2:
+        for i,item in enumerate(cv_ok_full):
+            print(f"#### CV1={item[0]}  CV2={item[1]}")
+            print(f"Number of points that satisfy {args.CVs[0]}: {len(item[2][0])}")
+            print(f"Number of points that satisfy {args.CVs[1]}: {len(item[2][1])}")
+            print(f"Structures that satisfy both criteria: {len(cv_both_full[i][2])}")
+            if len(cv_both_full[i][2]) > 0:
+                for j,k in enumerate(cv_both_full[i][2]):
+                    if j==0:
+                        ofile.write(f"Structure {k[0]} with {args.CVs[0]} value {results[k[0]][idx[0]]:.4f} "
+                            f"and {args.CVs[1]} value {results[k[0]][idx[1]]:.4f}\n")
+                        ofile2.write(f"{k[0]}\n")
+                    print(f"Structure {k[0]} with {args.CVs[0]} value {results[k[0]][idx[0]]:.4f} "
+                        f"and {args.CVs[1]} value {results[k[0]][idx[1]]:.4f}")
 
     
 

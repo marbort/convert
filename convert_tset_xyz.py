@@ -2,18 +2,41 @@ import glob
 import os
 import dpdata as dp
 
-def convert_tset_xyz(root,iteration="Iteration_",tset="tset_"):
-    files=glob.glob(os.path.join(root,iteration+"*",tset+"*"))
-    xyzfolder=os.path.join(root,"tset_xyz")
+def convert_tset_xyz(file,path):
+    xyzfolder=os.path.join(path,"tset_xyz")
     os.makedirs(xyzfolder,exist_ok=True)
-    for file in files:
-        data=dp.LabeledSystem(file,'deepmd/npy')
-        
-        xyzname=os.path.dirname(file).split('/')[-1]+"_"+os.path.basename(file)+".xyz"
-        data.to('xyz',os.path.join(xyzfolder,xyzname))
+    box=[]
+    data=dp.LabeledSystem(file,'deepmd/npy')
+    box.append(data['cells'])
+    xyzname=file+".xyz"
+    name=os.path.join(xyzfolder,xyzname)
+    print(name)
+    data.to('xyz',name)
+    return(box,name)
+
+def add_box_toxyz(file,box):
+    with open(file,'r') as ifile:
+        lines=ifile.readlines()
+    natoms=int(lines[0].rstrip())
+    
+    for i,line in enumerate(lines[1::natoms+2]):
+        cell=f"{box[0][i][0][0]} {box[0][i][1][1]} {box[0][i][2][2]}\n"
+        lines[i*(natoms+2)+1]=line.replace("\n",cell)
+    with open(file,'w') as ofile:
+        for line in lines:
+            ofile.write(line)
+
+    
+    
+    
 
 
 
 
-convert_tset_xyz("/home/marco/SHARED/RATIO/WP1/test_check")
+
+path=("./")
+files=glob.glob(path+"Iteration*")
+for file in files:
+    box,name=convert_tset_xyz(file,path)
+    add_box_toxyz(name,box)
     

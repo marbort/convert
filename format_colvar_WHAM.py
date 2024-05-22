@@ -17,6 +17,7 @@ parser.add_argument('--split', dest='split', default=1,
                     type=int, help='number of intervals to split simulation')
 parser.add_argument('--random', dest='random', 
                     action='store_true', help='randomize time series')
+
 args = parser.parse_args()
 
 cv=plumed.read_as_pandas(args.input)

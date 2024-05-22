@@ -12,6 +12,8 @@ def create_plumed_input(name):
     with open('plumed.dat','w') as pf:
         #print(tset,args.meta,previous_iteration)
         data=dp.System(name,'xyz')
+        print(input_dict['plumed']['print'])
+        input_dict['plumed']['print']=input_dict['plumed']['print'].replace('FILE=colvar',f'FILE=colvar_{name}')
         groups=[np.where(data['atom_types']==data['atom_names'].index(input_dict['plumed']['groups'][x][0])) for x in input_dict['plumed']['groups']]
         for i,item in enumerate(input_dict['plumed']['groups']):
             if input_dict['plumed']['groups'][item][1]=="all":

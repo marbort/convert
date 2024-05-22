@@ -68,7 +68,7 @@ def extract_data(input,split,min,fac):
         json.dump(datalist,ofile,indent=4)
     return(data)
 
-def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pres,wd=9,hg=9):
+def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pres,wd=10,hg=10):
     fig=plt.figure(figsize=(wd,hg),dpi=300)
     font = {'weight' : 'normal',
         'size'   : 30}

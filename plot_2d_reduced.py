@@ -27,6 +27,8 @@ def main():
                          help='Plot labels label')
     parser.add_argument('--min', dest='min', 
                         type=float, help='CV value for 0')
+    parser.add_argument('--errors', dest='errors', 
+                        help='plot errors',action='store_true',default=False)
     
     args = parser.parse_args()
     #pres_colors=["#2b38ff","#f7059b","#17d9ff","#000000","#4cb944"]
@@ -51,7 +53,7 @@ def main():
         else:
             plt.plot(cv1,min_path_cv1,label=args.labels[i],color=pres_colors[i])
         
-        if len(err_cv1)>0:
+        if args.errors:
             err=[x for x in err_cv1]
             if args.min:
                 plt.fill_between(cv1,[float(x-min_path_cv1[np.where(cv1==cv_min)]+err[i]) for i,x in enumerate(min_path_cv1)],
@@ -64,7 +66,7 @@ def main():
     plt.xlabel("Mg2-O")
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,3.0])
-    plt.ylim([-15,40.0])
+    plt.ylim([-5,200.0])
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('2D_reduced_compare.png',format='png')
