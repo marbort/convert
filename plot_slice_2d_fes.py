@@ -3,18 +3,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import glob
+import sys
 
-root='/home/marco/SHARED/RATIO/WP1/ML/fox/iPrMgCl/SAGA/META/opes/Mg1-O_Mg2-O/30_it24'
-slice='1.509412933'
+#root='/home/marco/SHARED/RATIO/WP1/ML/fox/iPrMgCl/SAGA/META/opes/Mg1-O_Mg2-O/30_it24'
+#slice=sys.argv[1]
 cv=2
 size={}
-file=os.path.join(root,'fes-rew_square_sparse.dat')
-with open(file,'r') as ifile:
-    lines=ifile.readlines()
-    for i in range(10):
-        if ' SET nbins_' in lines[i]:
-            size[lines[i].split()[-2].split('_')[1]]=int(lines[i].split()[-1].rstrip())
-    print(size)
+try:
+    file='fes-rew_square_sparse.dat'
+    with open(file,'r') as ifile:
+        lines=ifile.readlines()
+        for i in range(10):
+            if ' SET nbins_' in lines[i]:
+                size[lines[i].split()[-2].split('_')[1]]=int(lines[i].split()[-1].rstrip())
+        print(size)
+except:
+    file='fes-rew_square_sparse_walls.dat'
+    with open(file,'r') as ifile:
+        lines=ifile.readlines()
+        for i in range(10):
+            if ' SET nbins_' in lines[i]:
+                size[lines[i].split()[-2].split('_')[1]]=int(lines[i].split()[-1].rstrip())
+        print("WALLS")
+        print(size)
+    
 #%%
 
 data=np.loadtxt(file)
@@ -49,8 +61,8 @@ print(len(cv1),len(cv2),len(free))
 print(cv1[1],cv2[0],grid[0][1])
 #%%
 print(np.where(grid == np.min(grid)))
-print(grid[119][32])
-print(cv1[32],cv2[119])
+#print(grid[119][32])
+#print(cv1[32],cv2[119])
 #%%
 fig=plt.figure(figsize=(5,5),dpi=150)
 lev=int(round(np.max(grid)/4,0))
@@ -58,39 +70,48 @@ plt.contourf(cv1, cv2,grid,lev)
 plt.colorbar()
   
 # %% PLOT SLICE
-slice=1.0000000
-diff=[abs(x-slice) for x in cv1]
-diff2=[abs(x-slice) for x in cv2]
-act_slice=cv1[diff.index(min(diff))]
-act_slice2=cv2[diff2.index(min(diff2))]
-idx=np.where(cv1 == act_slice)
-idx2=np.where(cv2 == act_slice2)
+minima=np.loadtxt('minima.dat',unpack=True)
+slice=np.unique(minima[1])
+#slice=[x x-slice[j]]
+print(slice)
+diff=[[abs(x-k) for x in cv1] for k in slice]
+diff2=[[abs(x-k) for x in cv2] for k in slice]
+act_slice=[cv1[x.index(min(x))] for x in diff]
+act_slice2=[cv2[x.index(min(x))] for x in diff2]
+idx=[np.where(cv1 == x) for x in act_slice]
+idx2=[np.where(cv2 == x) for x in act_slice2]
 print(grid[1][0])
-slice_arr=[grid[x][idx] for x in range(len(grid)) ]
-slice_arr2=grid[idx2][0]
+slice_arr=[[grid[x][k] for x in range(len(grid)) ] for k in idx]
+slice_arr2=[grid[k][0] for k in idx2]
 #equal=range(0.5,2.0,0.3)    
 #slice_arr3=[grid[idx2][0]
- 
-print(slice_arr2)
+for i,item in enumerate(slice):
+    np.savetxt(f"slice_{item}.dat",list(zip(cv1,slice_arr2[i])),"%.3f")
+
+
+#print(slice_arr2)
 #print(grid[120][32])
-print(min(slice_arr))
+#print(min(slice_arr))
 #print(min(grid[:][32]))
 fig=plt.figure(figsize=(6,5),dpi=150)
-plt.plot(cv2,slice_arr,label="CV1 = {}".format(act_slice))
-plt.plot(cv1,slice_arr2,label="CV2 = {}".format(act_slice2))
-plt.xlim([0.75,2.])
-plt.ylim([0,80])
+#plt.plot(cv2,slice_arr,label="CV1 = {}".format(act_slice))
+for i,item in enumerate(slice):
+    plt.plot(cv1,slice_arr2[i],label="CV2 = {}".format(act_slice2[i]))
+plt.xlim([-2.5,2.5])
+plt.ylim([0,150])
 plt.xlabel("CV")
 plt.ylabel("E / Kj/mol")
 plt.legend()
 plt.title(os.path.split(os.path.split(file)[-2])[-1])
+plt.savefig(f'slice.png',format='png', dpi=150)
 
 # %%
+"""
 with open(root+'COLVAR_no_explosion') as ifile:
     lines=ifile.readlines()
     time=[float(x.split()[0]) for x in lines[1:]]
     bias=[float(x.split()[-2]) for x in lines[1:]]
 print(max(bias),time[bias.index(max(bias))])
 
-
+"""
 # %%

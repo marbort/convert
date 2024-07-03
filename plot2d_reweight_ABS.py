@@ -175,26 +175,7 @@ def minpath(input,x_start,y_start,x_end,y_end):
 
 
 
-def dim_red(cv1,cv2,free_grid,temp,output):
-    kbt=0.0083144621*temp #in kj/mol
-    prob_grid=np.exp(-free_grid/kbt)
-    reduced_prob_2=[np.trapz(y, cv2) for y in prob_grid]
-    reduced_fes_2=-kbt*np.log(reduced_prob_2)
-    offset2=min(reduced_fes_2)
-    reduced_fes_2-=offset2
-    reduced_prob_1=[np.trapz([y[i] for y in prob_grid] , cv1) for i in range(len(cv1)) ]
-    reduced_fes_1=-kbt*np.log(reduced_prob_1)
-    offset1=min(reduced_fes_1)
-    reduced_fes_1-=offset1
-    with open (f"{output}_cv1.dat",'w') as ofile:
-        for i,item in enumerate(reduced_fes_1):
-            ofile.write(f"{cv1[i]}  {item}\n")
-    with open (f"{output}_cv2.dat",'w') as ofile2:
-        for i,item in enumerate(reduced_fes_2):
-            ofile2.write(f"{cv2[i]}  {item}\n")
-    return(reduced_fes_1,reduced_fes_2)
-
-def dim_red_state(cv1,cv2,free_grid,temp):
+def dim_red(cv1,cv2,free_grid,temp):
     kbt=0.0083144621*temp #in kj/mol
     prob_grid=np.exp(-free_grid/kbt)
     reduced_prob_2=[np.trapz(y, cv2) for y in prob_grid]
@@ -342,28 +323,11 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('{}_reduced.png'.format(file),format='png')
-
-def plot_reduced_state(cv1,cv2,min_path_cv1,min_path_cv2,file):
-    fig=plt.figure(figsize=(16,10),dpi=150)
-    font = {'family' : 'sans',
-        'weight' : 'normal',
-        'size'   : 32}
-    mpl.rc('font', **font)
-    plt.plot(cv1,min_path_cv1,label="CV1")
-    plt.plot(cv2,min_path_cv2,label="CV2")
-    plt.xlabel("CV")
-    plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
-    #plt.xlim([0.5,4.0])
-    plt.ylim([-1.,150.0])
-    plt.legend()
-    #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
-    plt.savefig('{}_state_reduced.png'.format(file),format='png')
     
 
 def main():
 
     cv1,cv2,free_grid,min_pt=extract_data(sys.argv[1])
-    #cv1_state,cv2_state,free_grid_state,min_pt_state=extract_data(sys.argv[2])
     print(cv1[min_pt[1][0]],cv2[min_pt[0][0]],free_grid[min_pt[0][0],min_pt[1][0]])
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
@@ -387,15 +351,13 @@ def main():
     #cmap_active='Blues_r'
     #path=minpath(free_grid,1,1,2,2)
     min_path_cv1,min_path_cv2=get_minimum_path(cv1,cv2,free_grid)
-    reduced_fes_1,reduced_fes_2=dim_red(cv1,cv2,free_grid,300,sys.argv[1])
-    #reduced_fes_1_state,reduced_fes_2_state=dim_red_state(cv1_state,cv2_state,free_grid_state,300)
+    reduced_fes_1,reduced_fes_2=dim_red(cv1,cv2,free_grid,300)
     #minima=detect_local_minima(free_grid)
     #maxima=detect_local_minima(-free_grid)
     plot2d(cv1,cv2,free_grid,file,labx,laby,cmap_active,minima,min_pt)
     plot3d(cv1,cv2,free_grid,file+'.dat',labx,laby)
     #plotminpath(min_path_cv1,min_path_cv2,file)
     plot_reduced(cv1,cv2,reduced_fes_1,reduced_fes_2,file)
-    #plot_reduced_state(cv1_state,cv2_state,reduced_fes_1_state,reduced_fes_2_state,file)
 
 if __name__ == "__main__":
     main()

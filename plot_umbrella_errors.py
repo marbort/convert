@@ -51,8 +51,8 @@ def extract_data(input,split,min,fac):
     data['std_free']=[np.std(np.ma.masked_invalid(x)) for x in zip(*freesplit)]
     data['std_free_mean']=[(np.std(np.ma.masked_invalid(x))/np.sqrt(split-1)) for x in zip(*freesplit)]
     #print(data['mean_free_scaled'][data['split_0']['cv'].index(cv_min)])
+    #print(data["split_1"]['free'][-1],data["split_2"]['free'][-1],data["split_3"]['free'][-1],data["split_4"]['free'][-1],data['std_free'][-1],data['std_free_mean'][-1])
     print(data['std_free'][12],data['std_free_mean'][12])
-    
     for entry in data:
         if isinstance(data[entry],dict):
             datalist[entry]=data[entry]
@@ -62,10 +62,29 @@ def extract_data(input,split,min,fac):
         if isinstance(data[entry],np.ndarray):
             datalist[entry]=data[entry].tolist()
                     
-                    
+    with open(f"{input}_data",'w') as rawfile:
+        for i in data:
+            #print(i)
+            try:
+                json.dump({i:data[i]},rawfile,indent=2)
+            except:
+                newdata=[]
+                for j,item in enumerate(data[i]):
+                    newdata.append(item)
+                    if np.ma.is_masked(data[i][j]):
+                        newdata[j]=np.Infinity
+                    else:
+                        newdata[j]=data[i][j]
+                json.dump({i:newdata},rawfile,indent=2)
+                
+                #for j,item in data[i]:
+            #        if type(item) is  MaskedConstant:
+            #    print(i,data[i])
+                #newdata=data[i].tolist()
+            #    rawfile.write(json.dumps[newdata])
     
-    with open(f"{input}_data",'w') as ofile:
-        json.dump(datalist,ofile,indent=4)
+    #with open(f"{input}_data",'w') as ofile:
+     #   json.dump(datalist,ofile,indent=4)
     return(data)
 
 def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pres,wd=10,hg=10):
@@ -156,10 +175,11 @@ def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pr
                         markers,caps,bars=plt.plot(data[i]['full']['cv'],data[i]['full']['free'],'--',color=clr)
         [bar.set_alpha(0.0) for bar in bars]
     #plt.plot([x for x in data[i]["split_0"]['cv']],np.zeros(len(data[i]["split_0"]['cv'])))
+    plt.axhline(y=0, color='gray', linestyle='-',linewidth=1)
     plt.xlabel(x)
     plt.ylabel(y)
     #plt.xlim([3.4,4])
-    #plt.ylim([-1,5])
+    plt.ylim([-20,50])
     
     if labels:
         #leg=plt.legend(labels,loc='upper center')
@@ -168,6 +188,8 @@ def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pr
             lh.set_alpha(1)
     #else:
     #    plt.legend()
+    if kcal:
+        plt.ylabel("Free Energy ($kcal\ mol^{-1}$)")
     if inverted:
         plt.gca().invert_xaxis()
     plt.tight_layout()
@@ -184,7 +206,7 @@ def main():
     parser.add_argument('--split', dest='split', 
                         type=int, help='number of split for each umbrella',nargs="+")
     parser.add_argument('--min', dest='min', 
-                        type=float, help='CV value for 0')
+                        type=float, help='CV value for 0',nargs='+')
     parser.add_argument('--full', dest='full', action='store_true',
                          help='plot also FES using whole trajectory')
     parser.add_argument('--equil', dest='equil', action='store_true',
@@ -206,7 +228,12 @@ def main():
     args = parser.parse_args()
     data={}
     for i,input in enumerate(args.input):
-        data[input]=extract_data(input,args.split[i],args.min,args.fac[i])
+        try:
+            data[input]=extract_data(input,args.split[i],args.min[i],args.fac[i])
+        except:
+            print("Single minimum defined")
+            data[input]=extract_data(input,args.split[i],args.min,args.fac[i])
+            
     #print(data)
     plot_data(data,args.min,args.full,args.equil,args.input,args.kcal,args.xlabel,args.ylabel,args.labels,args.inverted,args.color,args.pres)
     

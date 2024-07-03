@@ -23,18 +23,27 @@ def main():
     parser = argparse.ArgumentParser(description='Plot data')
     parser.add_argument('--input', dest='input', 
                         type=str, help='input data',nargs="+")
+    parser.add_argument('--output', dest='output', 
+                        type=str, help='output file',default="2D_reduced_compare.png")
+    parser.add_argument('--title', dest='title', 
+                        type=str, help='plot title',default="Free Energy Profile")
     parser.add_argument('--labels', dest='labels', default=None, type=str, nargs='+',
                          help='Plot labels label')
+    parser.add_argument('--xlab', dest='xlab', type=str, nargs=1,
+                         help='X axis label',default='CV1')
     parser.add_argument('--min', dest='min', 
                         type=float, help='CV value for 0')
     parser.add_argument('--errors', dest='errors', 
                         help='plot errors',action='store_true',default=False)
+    parser.add_argument('--range', dest='range', 
+                        help='set X range',nargs='+',type=float)
     
     args = parser.parse_args()
     #pres_colors=["#2b38ff","#f7059b","#17d9ff","#000000","#4cb944"]
     pres_colors=["#2b38ff","#ff6800","#32c47f","#C179B9","#17d9ff","#4cb944"]
     data={}
     err_cv1=[]
+    lw=4
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
@@ -49,9 +58,9 @@ def main():
             cv1,min_path_cv1,err_cv1=np.loadtxt(input,unpack=True)
         if args.min:
              cv_min=find_nearest(cv1,args.min)
-             plt.plot(cv1,[x-min_path_cv1[np.where(cv1==cv_min)] for x in min_path_cv1],label=args.labels[i],linewidth=3,color=pres_colors[i])
+             plt.plot(cv1,[x-min_path_cv1[np.where(cv1==cv_min)] for x in min_path_cv1],label=args.labels[i],linewidth=lw,color=pres_colors[i])
         else:
-            plt.plot(cv1,min_path_cv1,label=args.labels[i],color=pres_colors[i])
+            plt.plot(cv1,min_path_cv1,label=args.labels[i],color=pres_colors[i],linewidth=lw)
         
         if args.errors:
             err=[x for x in err_cv1]
@@ -62,14 +71,15 @@ def main():
                 plt.fill_between(cv1,min_path_cv1+err,min_path_cv1-err,linewidth=0,alpha=0.1,color=pres_colors[i])
             
                 
-            
-    plt.xlabel("Mg2-O")
+    plt.xlim(args.range[0],args.range[1])  
+    plt.xlabel(args.xlab)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
-    #plt.xlim([0.5,3.0])
+    #plt.xlim([0.8,2.2])
     plt.ylim([-5,200.0])
+    plt.title(args.title,y=1.05)
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
-    plt.savefig('2D_reduced_compare.png',format='png')
+    plt.savefig(args.output,format='png')
     #print(len(data['free']),len(data['err']))
     
 if __name__=="__main__":

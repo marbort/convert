@@ -56,7 +56,7 @@ def main():
     # Parse the command line arguments
     parser = argparse.ArgumentParser(
         description='Convert DPData files to a single extended xyz formatted file')
-    parser.add_argument('--input',  type=str, help='Input DPData type.raw files')
+    parser.add_argument('--input',  type=str, help='Input lammps trj')
     parser.add_argument('--output', type=str,
                         help='Output xyz file')
     parser.add_argument('--types_elm', dest='ty2elm', default=1,
