@@ -338,33 +338,18 @@ def plot_reduced(cv1,cv2,min_path_cv1,min_path_cv2,file):
     plt.xlabel("CV")
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
-    plt.ylim([-1.,150.0])
+    plt.ylim([-1.,220.0])
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig('{}_reduced.png'.format(file),format='png')
 
-def plot_reduced_state(cv1,cv2,min_path_cv1,min_path_cv2,file):
-    fig=plt.figure(figsize=(16,10),dpi=150)
-    font = {'family' : 'sans',
-        'weight' : 'normal',
-        'size'   : 32}
-    mpl.rc('font', **font)
-    plt.plot(cv1,min_path_cv1,label="CV1")
-    plt.plot(cv2,min_path_cv2,label="CV2")
-    plt.xlabel("CV")
-    plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
-    #plt.xlim([0.5,4.0])
-    plt.ylim([-1.,150.0])
-    plt.legend()
-    #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
-    plt.savefig('{}_state_reduced.png'.format(file),format='png')
     
 
 def main():
 
     cv1,cv2,free_grid,min_pt=extract_data(sys.argv[1])
     #cv1_state,cv2_state,free_grid_state,min_pt_state=extract_data(sys.argv[2])
-    print(cv1[min_pt[1][0]],cv2[min_pt[0][0]],free_grid[min_pt[0][0],min_pt[1][0]])
+    #print(cv1[min_pt[1][0]],cv2[min_pt[0][0]],free_grid[min_pt[0][0],min_pt[1][0]])
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
     laby=sys.argv[3]
@@ -374,7 +359,7 @@ def main():
          minima=""
     cmap_active='rainbow'
     saddle=allSaddles(free_grid)
-    print(saddle)
+    #print(saddle)
     #cmap_active=ListedColormap(np.linspace([0.16862745098, 0.219607843137,1,1],[1, 1,1,1],12)) #blue
     #cmap_active=ListedColormap(np.linspace([1.0, 0.40784313725490196,0,1],[1, 1,1,1],12)) #orange
     #cmap_active=ListedColormap(np.linspace([0.1960784313725490, 0.7686274509803922,0.4980392156862745,1],[1, 1,1,1],12)) #green
