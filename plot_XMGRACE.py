@@ -10,7 +10,7 @@ from decimal import *
 
 #clrs=["#f21d2f","#2104d9","#f2ae2e"]
 #clrs=['#5764D9','#D97C57','#86D957']
-clrs=['#0000FF','#FF0000','#00FF00']+list(mpl.colors.TABLEAU_COLORS.keys())
+clrs=['#0000FF','#FF0000','#000000']+list(mpl.colors.TABLEAU_COLORS.keys())
 mpl.rcParams['axes.linewidth'] = 3
 lnwd=5
 font = {'family' : 'sans',
@@ -216,6 +216,7 @@ def plot_interval_integral(data,area,labels,limx,limy,wd=15,hg=10):
     if labels:
         plt.legend(labels)
     plt.xlim(limx)
+    plt.ylim(limy)
     plt.xlabel("Z / nm")
     plt.ylabel("Average number of molecules")
     plt.savefig('{}_Int_density_interval_plot.png'.format(name),format='png',transparent=True)
@@ -303,7 +304,7 @@ if args.intg:
 if args.cumint:
     plot_cumul_int(data,clrs,lw)
     #print(split_mean)
-    plot_interval_integral(split_mean,args.area,args.legend,[6,19],args.ylim)
+    plot_interval_integral(split_mean,args.area,args.legend,args.xlim,args.ylim)
 
 
 plot_data(data,files,args.legend,args.xlim,args.ylim,args.shade_min,args.shade_max,args.trans,'a4',3)

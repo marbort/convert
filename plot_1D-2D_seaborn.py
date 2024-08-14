@@ -28,7 +28,7 @@ def plot_joint(x,y,value,file,labx,laby,cmap,minima,min_pt,cv1,cv2,y_max_1d=120)
     mpl.rcParams['axes.linewidth'] = 3
     mpl.rcParams['lines.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
-    MAX=120
+    MAX=int(y_max_1d)
     
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
@@ -153,6 +153,7 @@ def plot_joint(x,y,value,file,labx,laby,cmap,minima,min_pt,cv1,cv2,y_max_1d=120)
     #plt.xlim([0.5,4.0])
     limy=int(y_max_1d)
     g.ax_marg_x.set_ylim([-10,limy])
+    g.ax_marg_x.set_xlabel(labx)
     g.ax_marg_x.set_yticks(range(0,limy+limy//2,limy//2))
     g.ax_marg_x.xaxis.set_ticks_position('none')
     g.ax_marg_x.set_frame_on(True)
@@ -170,6 +171,7 @@ def plot_joint(x,y,value,file,labx,laby,cmap,minima,min_pt,cv1,cv2,y_max_1d=120)
     #plt.xlabel("CV")
     #plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     g.ax_marg_y.set_xlim([-10,limy])
+    g.ax_marg_y.set_ylabel(laby,x=-0.5,y=-0.5)
     g.ax_marg_y.set_xticks(range(0,limy+limy//2,limy//2))
     g.ax_marg_y.yaxis.set_ticks_position('none')
     g.ax_marg_y.set_frame_on(True)

@@ -219,14 +219,14 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     mpl.rcParams['axes.linewidth'] = 3
     mpl.rcParams['lines.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
-    MAX=200
+    MAX=70
     
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
-    lev=range(0,MAX+5,5)
+    lev=range(0,MAX+2,2)
     
-    CLines=plt.contour(x, y,value,levels=range(0,80,20),vmin=0,vmax=MAX,linewidths=1,colors='white')
-    plt.clabel(CLines,levels=range(0,80,20), inline=True, fontsize=10,colors='white')
+    CLines=plt.contour(x, y,value,levels=range(0,80,20),vmin=0,vmax=MAX,linewidths=1,colors='black')
+    plt.clabel(CLines,levels=range(0,80,20), inline=True, fontsize=10,colors='black')
     plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
     ###
     
@@ -243,7 +243,7 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     #cbar=plt.colorbar(label="$\Delta A\ (kcal\ mol^{-1})$",ticks=range(0,11,1))
     #cbar.ax.set_ylim(0,10)
     #cbar kj/mol
-    cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+MAX//10,MAX//10))
+    cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+20,20))
     cbar.ax.set_ylim(0,MAX)
     #for i in minpath:
     #    plt.scatter(x[i[0]],y[i[1]],color='black')

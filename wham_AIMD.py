@@ -87,7 +87,8 @@ def main():
     
     args = parser.parse_args()
     
-    files=glob.glob('*metadynLog')
+    files_all=glob.glob('*metadynLog')
+    files=[x for x in files_all if "equil" not in x]
     
     for file in files:
         with open(file,'r') as ifile:

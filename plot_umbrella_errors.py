@@ -72,7 +72,7 @@ def extract_data(input,split,min,fac):
                 for j,item in enumerate(data[i]):
                     newdata.append(item)
                     if np.ma.is_masked(data[i][j]):
-                        newdata[j]=np.Infinity
+                        newdata[j]=np.inf
                     else:
                         newdata[j]=data[i][j]
                 json.dump({i:newdata},rawfile,indent=2)

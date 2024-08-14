@@ -26,7 +26,7 @@ def main():
     parser.add_argument('--output', dest='output', 
                         type=str, help='output file',default="2D_reduced_compare.png")
     parser.add_argument('--title', dest='title', 
-                        type=str, help='plot title',default="Free Energy Profile")
+                        type=str, help='plot title',default="")
     parser.add_argument('--labels', dest='labels', default=None, type=str, nargs='+',
                          help='Plot labels label')
     parser.add_argument('--xlab', dest='xlab', type=str, nargs=1,
@@ -75,7 +75,7 @@ def main():
     plt.xlabel(args.xlab)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.8,2.2])
-    plt.ylim([-5,200.0])
+    #plt.ylim([-50,200.0])
     plt.title(args.title,y=1.05)
     plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
