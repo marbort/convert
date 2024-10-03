@@ -16,6 +16,18 @@ def plot_colvar(colvars,data):
     plt.legend(colvars)
     plt.savefig(f'colvars_{"_".join(colvars)}.png',format='png',dpi=150)
     
+def histo_colvar(colvars,data):
+   
+    fig=plt.figure(figsize=(16,9))
+    for i,colvar in enumerate(colvars):
+        plt.subplot(1,len(colvars),i+1)
+        plt.hist(data[colvar],bins=len(colvars)*10,label=colvars[i])
+        print(colvars[i])
+        plt.legend()
+    plt.savefig(f'colvars_HIST_{"_".join(colvars)}.png',format='png',dpi=150)
+
+
+    
 
 def get_colvars_meta(plumed):
     colvars=[]
@@ -31,3 +43,4 @@ colvars=get_colvars_meta('plumed.dat')
 #print(colvars)
 #print(data['cvMg1IPR'])
 plot_colvar(colvars,data)
+histo_colvar(colvars,data)

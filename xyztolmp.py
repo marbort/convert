@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 
-#type_map={"C":1,"O":2,"H":3,"Mg":6,"Cl":4,"Li":5}
+#type_map={"C":1,"O":2,"H":3,"Mg":4,"Cl":5,"Li":6}
 type_map={"C":1,"Cl":2,"H":3,"N":4,"O":5,"Mg":6}
 
 
@@ -10,7 +10,7 @@ types=[type_map[x] for x in elm]
 
 with open('conf_data_temp','w') as ofile:
     for i,line in enumerate(types):
-        ofile.write("{:8d}\t{:8d}\t{:10s}\t{:10s}\t{:10s}\n".format(i+1,line,x[i],y[i],z[i]))
+        ofile.write("{:8d} {:8d} {:10s} {:10s} {:10s}\n".format(i+1,line,x[i],y[i],z[i]))
 
 
 

@@ -3,6 +3,7 @@ import argparse
 import sys
 import dpdata
 import ase
+from ase import io
 import os 
 
 # Parse the command line arguments

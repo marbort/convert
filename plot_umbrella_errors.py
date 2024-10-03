@@ -106,7 +106,7 @@ def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pr
     kj_to_kcal=0.239006
     erclr=["1f77b4", "ff7f0e", "2ca02c", 'd62728', '9467bd', '8c564b', 'e377c2', '7f7f7f', 'bcbd22', '17becf']
     erclr_rgba=[[int("".join(x[0:2]),16)/255,int("".join(x[2:4]),16)/255,int("".join(x[4:6]),16)/255,0.2] for x in erclr]
-    pres_colors=["2b38ff","ff6800","32c47f","C179B9","17d9ff","4cb944"]
+    pres_colors=["cb5649","eba938","32c47f","C179B9","17d9ff","4cb944"]
     pres_colors_rgba=[[int("".join(x[0:2]),16)/255,int("".join(x[2:4]),16)/255,int("".join(x[4:6]),16)/255,1] for x in pres_colors]
     for j,i in enumerate(data):    
         if pres:
@@ -179,7 +179,11 @@ def plot_data(data,min,full,equil,input,kcal,x,y,labels,inverted,single_color,pr
     plt.xlabel(x)
     plt.ylabel(y)
     #plt.xlim([3.4,4])
-    plt.ylim([-20,50])
+    #if kcal:
+    #    Y=[x*kj_to_kcal for x in data[i]['equil']['free_scaled']
+    #    MINY=min()
+
+    plt.ylim([-5,35])
     
     if labels:
         #leg=plt.legend(labels,loc='upper center')

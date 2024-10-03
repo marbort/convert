@@ -59,11 +59,11 @@ def split_file(file,lines,parts):
                 except:
                     os.remove(ofile.name)
                    
-def do_wham(parts,start,end,nbins,temp):
-    subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, "0.00001", temp, "0", "sims.txt", "out.dat_all"])
-    subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, "0.00001", temp, "0", "sims_equil.txt", "out.dat_all_equil", "50", "3153"])
+def do_wham(parts,start,end,nbins,temp,tol):
+    subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", "sims.txt", "out.dat_all"])
+    subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", "sims_equil.txt", "out.dat_all_equil"])
     for i in range(parts):
-       subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, "0.00001", temp, "0", f"sims_{i}.txt", f"out.dat_all_{i}"])
+       subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", f"sims_{i}.txt", f"out.dat_all_{i}"])
     
     
     
@@ -83,6 +83,7 @@ def main():
     parser.add_argument('--nbins' , dest='nbins', type=str, default="50",help='Number of WHAM bins')
     parser.add_argument('--temp' , dest='temp',type=str, default="300",help='Temperature for WHAM')
     parser.add_argument('--fac' , dest='fac',type=float, default=1.89,help='Conversion factor between at in filename and in colvar. Default: 1.89')
+    parser.add_argument('--tol' , dest='tol',type=str, default="1e-5",help='Tolerance for WHAM. Default 1e-5')
     
     
     args = parser.parse_args()
@@ -124,7 +125,7 @@ def main():
                     ofile.write(f'{file} {at} {kappa} 200 \n')
                 with open(f'sims_equil.txt','a') as ofile:
                     ofile.write(f'{file} {at} {kappa} 200\n')
-    do_wham(args.parts,args.start,args.end,args.nbins,args.temp)
+    do_wham(args.parts,args.start,args.end,args.nbins,args.temp,args.tol)
 
 
 if __name__=="__main__":

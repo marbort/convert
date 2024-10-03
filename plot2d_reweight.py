@@ -16,7 +16,7 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 
 sys.path.append('/home/marco/SHARED/GitHub/mepfinder/mepfinder')
-from  flooder import Flooder
+#from  flooder import Flooder
 
 
 # Python3 program to illustrate 
@@ -210,7 +210,7 @@ def dim_red_state(cv1,cv2,free_grid,temp):
     
 
 
-def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
+def plot2d(x,y,maxz,value,file,labx,laby,cmap,minima,min_pt):
     fig=plt.figure(figsize=(16,10),dpi=150)
     font = {'family' : 'Formular',
         'weight' : 'normal',
@@ -219,14 +219,14 @@ def plot2d(x,y,value,file,labx,laby,cmap,minima,min_pt):
     mpl.rcParams['axes.linewidth'] = 3
     mpl.rcParams['lines.linewidth'] = 3
     #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
-    MAX=70
+    MAX=int(maxz)
     
     #plt.imshow(np.rot90(value),extent=(min(x),max(x),min(y),max(y)))
     #kjmol/plot
-    lev=range(0,MAX+2,2)
+    lev=range(0,MAX+5,5)
     
-    CLines=plt.contour(x, y,value,levels=range(0,80,20),vmin=0,vmax=MAX,linewidths=1,colors='black')
-    plt.clabel(CLines,levels=range(0,80,20), inline=True, fontsize=10,colors='black')
+    CLines=plt.contour(x, y,value,levels=range(0,MAX,20),vmin=0,vmax=MAX,linewidths=1,colors='black')
+    plt.clabel(CLines,levels=range(0,MAX,20), inline=True, fontsize=10,colors='black')
     plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
     ###
     
@@ -353,8 +353,9 @@ def main():
     file=os.path.splitext(sys.argv[1])[0]
     labx=sys.argv[2]
     laby=sys.argv[3]
+    MAX=sys.argv[4]
     try:
-        minima=sys.argv[4]
+        minima=sys.argv[5]
     except:
          minima=""
     cmap_active='rainbow'
@@ -376,7 +377,7 @@ def main():
     #reduced_fes_1_state,reduced_fes_2_state=dim_red_state(cv1_state,cv2_state,free_grid_state,300)
     #minima=detect_local_minima(free_grid)
     #maxima=detect_local_minima(-free_grid)
-    plot2d(cv1,cv2,free_grid,file,labx,laby,cmap_active,minima,min_pt)
+    plot2d(cv1,cv2,MAX,free_grid,file,labx,laby,cmap_active,minima,min_pt)
     plot3d(cv1,cv2,free_grid,file+'.dat',labx,laby)
     #plotminpath(min_path_cv1,min_path_cv2,file)
     plot_reduced(cv1,cv2,reduced_fes_1,reduced_fes_2,file)

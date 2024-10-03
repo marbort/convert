@@ -38,7 +38,7 @@ def find_values(input,CV,valfile,tol):
 parser = argparse.ArgumentParser(description='Plot data')
 
 
-parser.add_argument('--input' , dest='input',help='lammps trajectory')
+parser.add_argument('--input' , dest='input',help='colvar file')
 parser.add_argument('--CVs', dest='CVs', default=['CV1','CV2'],
                      help='CVs to check',nargs='+')
 parser.add_argument('--val', dest='val', 

@@ -29,10 +29,12 @@ def main():
                         type=str, help='plot title',default="")
     parser.add_argument('--labels', dest='labels', default=None, type=str, nargs='+',
                          help='Plot labels label')
-    parser.add_argument('--xlab', dest='xlab', type=str, nargs=1,
+    parser.add_argument('--xlab', dest='xlab', type=str, 
                          help='X axis label',default='CV1')
     parser.add_argument('--min', dest='min', 
                         type=float, help='CV value for 0')
+    parser.add_argument('--limy', dest='limy', 
+                        type=float, help='y MAX value')
     parser.add_argument('--errors', dest='errors', 
                         help='plot errors',action='store_true',default=False)
     parser.add_argument('--range', dest='range', 
@@ -40,7 +42,9 @@ def main():
     
     args = parser.parse_args()
     #pres_colors=["#2b38ff","#f7059b","#17d9ff","#000000","#4cb944"]
-    pres_colors=["#2b38ff","#ff6800","#32c47f","#C179B9","#17d9ff","#4cb944"]
+    pres_colors=["#c1272d","#0000a7","#eba938","#008176","#b3b3b3","#4cb944"]
+    cmap = mpl.colormaps['rainbow']
+    cmap_colors=[cmap(0),cmap(0.5),cmap(0.75),cmap(1.0)]
     data={}
     err_cv1=[]
     lw=4
@@ -75,9 +79,10 @@ def main():
     plt.xlabel(args.xlab)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.8,2.2])
-    #plt.ylim([-50,200.0])
+    plt.ylim([-5,args.limy])
     plt.title(args.title,y=1.05)
-    plt.legend()
+    plt.legend(loc='center left',bbox_to_anchor=(1, 0.5),frameon=False)
+    plt.tight_layout()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig(args.output,format='png')
     #print(len(data['free']),len(data['err']))

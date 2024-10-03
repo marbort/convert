@@ -3,7 +3,7 @@ import os
 import dpdata as dp
 
 def convert_tset_xyz(file,path):
-    xyzfolder=os.path.join(path,"tset_xyz")
+    xyzfolder=os.path.join(path,f"{file}_xyz")
     os.makedirs(xyzfolder,exist_ok=True)
     box=[]
     data=dp.LabeledSystem(file,'deepmd/npy')
@@ -35,7 +35,7 @@ def add_box_toxyz(file,box):
 
 
 path=("./")
-files=glob.glob(path+"Iteration*")
+files=glob.glob(path+"tset*")
 for file in files:
     box,name=convert_tset_xyz(file,path)
     add_box_toxyz(name,box)
