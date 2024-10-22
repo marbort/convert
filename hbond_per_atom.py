@@ -4,7 +4,7 @@ import sys
 import os
 
 
-atom_numbs={"CHL":400,"CL":400,"GCL":800}
+atom_numbs={"CHL":400,"CL":400,"GCL":800,"ACP":26,"Clm":400}
 
 def calc_avg_per_atom(atoms_numb,hbonds,atom):
     hb=np.loadtxt(hbonds,unpack=True)
@@ -16,7 +16,7 @@ def calc_avg_per_atom(atoms_numb,hbonds,atom):
 files=glob.glob("*hbond*")
 
 for file in files:
-    atom=os.path.basename(file).split('_')[1]
+    atom=os.path.basename(file).split('_')[3]
     avg,std=calc_avg_per_atom(atom_numbs,file,atom)
     print(file,f"{avg:.3f}",f"{std:.3f}")
     

@@ -39,6 +39,8 @@ def main():
                         help='plot errors',action='store_true',default=False)
     parser.add_argument('--range', dest='range', 
                         help='set X range',nargs='+',type=float)
+    parser.add_argument('--Emax', dest='Emax', 
+                        help='set max of E',type=float)
     
     args = parser.parse_args()
     #pres_colors=["#2b38ff","#f7059b","#17d9ff","#000000","#4cb944"]
@@ -60,6 +62,7 @@ def main():
             cv1,min_path_cv1=np.loadtxt(input,unpack=True)
         except:
             cv1,min_path_cv1,err_cv1=np.loadtxt(input,unpack=True)
+        min_path_cv1[min_path_cv1>args.Emax]=args.Emax
         if args.min:
              cv_min=find_nearest(cv1,args.min)
              plt.plot(cv1,[x-min_path_cv1[np.where(cv1==cv_min)] for x in min_path_cv1],label=args.labels[i],linewidth=lw,color=pres_colors[i])

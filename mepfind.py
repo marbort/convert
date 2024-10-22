@@ -27,32 +27,44 @@ def extract_data(input):
 
 
 def plot2d(x,y,maxz,value,file,labx,laby,cmap,min_path):
-    fig=plt.figure(figsize=(16,10),dpi=150)
+    fig=plt.figure(figsize=(16,12),dpi=150)
     font = {'family' : 'Formular',
         'weight' : 'normal',
-        'size'   : 30}
+        'size'   : 46}
     mpl.rc('font', **font)
     mpl.rcParams['axes.linewidth'] = 3
     mpl.rcParams['lines.linewidth'] = 3
-    
+    #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
     MAX=int(maxz)
     
-   
+    
     lev=range(0,MAX+5,5)
     
-    CLines=plt.contour(x, y,value,levels=range(0,MAX,20),vmin=0,vmax=MAX,linewidths=1,colors='black')
-    plt.clabel(CLines,levels=range(0,MAX,20), inline=True, fontsize=10,colors='black',fmt="%d")
+    value[value>MAX]=MAX+10
+    CLines=plt.contour(x, y,value,levels=range(0,MAX,20),vmin=0,vmax=MAX,linewidths=1.5,colors='black')
+    
+    print(max(x),max(y))
+    tix=np.linspace(0,max(x),round(max(x)/0.5)+1)
+    tiy=np.linspace(0,max(y),round(max(y)/0.5)+1)
+    print(tix)
+   
     plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
+  
     
     plt.xlabel(labx)
     plt.ylabel(laby)
-    plt.xticks(np.arange(min(x),max(x)+0.5,0.5))
+    
     
     cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+20,20))
-    #cbar.ax.set_xlim(0,MAX)
-    plt.scatter(min_path[0],min_path[1],color='white',s=10)
+    #cbar.ax.set_ylim(0,MAX)
     
-
+    
+    
+    
+    plt.scatter(min_path[0],min_path[1],color='white',s=10)
+    plt.xlim([min(x),max(x)])
+    plt.ylim([min(y),max(y)])
+    plt.tight_layout()
     plt.savefig('{}_minpath.png'.format(file),format='png')
 
 parser = argparse.ArgumentParser(description='Plot data')

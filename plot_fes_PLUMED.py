@@ -26,7 +26,8 @@ def extract_data(input):
     cv1=np.unique(file[0])
     cv2=np.unique(file[1])
     val=np.array(file[2])
-    free_grid=val.reshape(len(cv1),len(cv2))
+    val_shift=val-min(val)
+    free_grid=val_shift.reshape(len(cv1),len(cv2))
     
     return(cv1,cv2,free_grid)
 
