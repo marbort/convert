@@ -16,7 +16,7 @@ import math
 
 
 def bar_percentages(inputs):
-    fig=plt.figure(figsize=(32,32),dpi=150)
+    fig=plt.figure(figsize=(48,16),dpi=150)
     font = {'family' : 'Formular',
         'weight' : 'normal',
         'size'   : 60}
@@ -70,9 +70,9 @@ def bar_percentages(inputs):
             plt.title(titles[k-1])
         else:
         """
-        plt.subplot(2,2,k+1)
+        plt.subplot(1,4,k+1)
         ax=fig.gca()
-        ax.set_facecolor(shades[k])
+        #ax.set_facecolor(shades[k])
         ax.patch.set_alpha(0.5)
         multiplier=0
         for j,mol in enumerate(bars[bar]):
@@ -87,7 +87,7 @@ def bar_percentages(inputs):
         plt.ylim([0,1.1])
         print(k)
         plt.title(titles[k])
-    plt.subplot(2,2,1)
+    plt.subplot(1,4,1)
     plt.ylabel("Molecule fraction")
     #plt.subplot(1,len(bars),len(bars))
     plt.legend()

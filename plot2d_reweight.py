@@ -137,7 +137,7 @@ def symmetryze(free_grid):
     symm_free_grid=np.empty_like(free_grid)
     for i in range(len(free_grid)):
         for j in range(len(free_grid[i])):
-            symm_free_grid[i][j]=(free_grid[i][j]+free_grid[-1-i][-1-j])/2
+            symm_free_grid[i][j]=(free_grid[i][j]+free_grid[j][i])/2
     np.savetxt(f"data_symm.dat",symm_free_grid,fmt="%.3f")
     return(symm_free_grid)
 
