@@ -61,7 +61,7 @@ def plot2d(x,y,maxz,value,file,labx,laby,cmap,min_path):
     
     
     
-    plt.scatter(min_path[0],min_path[1],color='white',s=10)
+    plt.scatter(min_path[0],min_path[1],color='white',s=45)
     plt.xlim([min(x),max(x)])
     plt.ylim([min(y),max(y)])
     plt.tight_layout()

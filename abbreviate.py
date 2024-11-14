@@ -1,6 +1,7 @@
 import os
 import json
 import regex as re
+import sys
 
 def create_database(list,outpath):
     database={}
@@ -9,7 +10,8 @@ def create_database(list,outpath):
         for line in lines:
             abbrv=[x+"." for x in line.split('=')[1].rstrip().split()]
             abbrvdot=' '.join(abbrv)
-            database[line.split('=')[0].rstrip()]=abbrvdot
+            dat_name=re.sub('[^a-zA-Z0-9 \n\.]', '', line.split('=')[0].rstrip().lower())
+            database[dat_name]=abbrvdot
     with open(os.path.join(outpath,'abbreviations.json'),'w') as ofile:
         json.dump(database,ofile,indent=1)
 
@@ -22,17 +24,21 @@ def abbreviate_bib(bibfile,database):
             if "journal" in line:
                 jname=re.findall('\{(.*?)\}',line)
                 try:   
-                    tmp=line.replace(jname[0],abbrv[jname[0]])
+                    tmp=line.replace(jname[0],abbrv[jname[0].lower().rstrip()])
                     lines[i]=tmp
                 except:
-                    print("Journal {} not found".format(jname))
+                    try:
+                        tmp=line.replace(jname[0],abbrv[jname[0][4:].lower().rstrip()])
+                        lines[i]=tmp
+                    except:
+                        print("Journal {} not found".format(jname))
         with open('bib_abbrv.bib','w') as ofile:
             for line in lines:
                 ofile.write(line)
 
 
-create_database('/home/marco/Downloads/jabref_wos_abbrev.txt','/home/marco')
-abbreviate_bib('/home/marco/SHARED/GitHub/mio/DES_interface/refs.bib','/home/marco/abbreviations.json')
+#create_database('/home/marco/Downloads/jabref_wos_abbrev.txt','/home/marco')
+abbreviate_bib(sys.argv[1],'/home/marco/abbreviations.json')
                     
         
     

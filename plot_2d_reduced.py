@@ -37,6 +37,8 @@ def main():
                         type=float, help='y MAX value')
     parser.add_argument('--errors', dest='errors', 
                         help='plot errors',action='store_true',default=False)
+    parser.add_argument('--exterrors', dest='exterrors', 
+                        help='take errors from external file',default=None,type=str)
     parser.add_argument('--range', dest='range', 
                         help='set X range',nargs='+',type=float)
     parser.add_argument('--Emax', dest='Emax', 
@@ -59,10 +61,14 @@ def main():
     for i,input in enumerate(args.input):
         cv_min=0
         try:
+            print(input)
             cv1,min_path_cv1=np.loadtxt(input,unpack=True)
         except:
+            print(input)
             cv1,min_path_cv1,err_cv1=np.loadtxt(input,unpack=True)
+        
         min_path_cv1[min_path_cv1>args.Emax]=args.Emax
+        
         if args.min:
              cv_min=find_nearest(cv1,args.min)
              plt.plot(cv1,[x-min_path_cv1[np.where(cv1==cv_min)] for x in min_path_cv1],label=args.labels[i],linewidth=lw,color=pres_colors[i])
@@ -70,7 +76,15 @@ def main():
             plt.plot(cv1,min_path_cv1,label=args.labels[i],color=pres_colors[i],linewidth=lw)
         
         if args.errors:
-            err=[x for x in err_cv1]
+            if args.exterrors:
+                try:
+                    exterrs=np.loadtxt(args.exterrors,unpack=True)
+                    err=[x for x in  exterrs[1]]
+                except:
+                    print("Error reading external errors file.")
+                    sys.exit()
+            else:
+                err=[x for x in err_cv1]
             if args.min:
                 plt.fill_between(cv1,[float(x-min_path_cv1[np.where(cv1==cv_min)]+err[i]) for i,x in enumerate(min_path_cv1)],
                                  [float(x-min_path_cv1[np.where(cv1==cv_min)]-err[i]) for i,x in enumerate(min_path_cv1)],linewidth=0,alpha=0.1,color=pres_colors[i])

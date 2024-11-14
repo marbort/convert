@@ -10,14 +10,7 @@ from MDAnalysis.analysis.lineardensity import LinearDensity
 import glob
 
 #%%
-def coord_number(x,y,dist_min,dist_max,mols):
-    val_x=[k for k in x if dist_min<= k <=dist_max]
-    val_x_sq=[k**2 for k in val_x]
-    val_y=[y[i] for i,k  in enumerate(x) if dist_min <= k <= dist_max]
-    prod=[k*val_y[i] for i,k in enumerate(val_x_sq)]
-    CN_all=4*np.pi*np.trapz(prod,val_x)
-    CN_one=CN_all/mols
-    return(CN_one)
+c
     
 def RDF_COM_volume(gA,gB,Universe,binsize,max):
     groupA=Universe.select_atoms(gA)
