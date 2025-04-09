@@ -59,6 +59,7 @@ def main():
     mpl.rc('font', **font)
     mpl.rcParams['axes.linewidth'] = 3
     for i,input in enumerate(args.input):
+        path=os.path.dirname(input)
         cv_min=0
         try:
             print(input)
@@ -66,8 +67,10 @@ def main():
         except:
             print(input)
             cv1,min_path_cv1,err_cv1=np.loadtxt(input,unpack=True)
-        
+            err_cv1[err_cv1>args.Emax/2]=0
         min_path_cv1[min_path_cv1>args.Emax]=args.Emax
+        
+        #print(err_cv1)
         
         if args.min:
              cv_min=find_nearest(cv1,args.min)
@@ -78,8 +81,9 @@ def main():
         if args.errors:
             if args.exterrors:
                 try:
-                    exterrs=np.loadtxt(args.exterrors,unpack=True)
-                    err=[x for x in  exterrs[1]]
+                    exterrs=np.loadtxt(os.path.join(path,args.exterrors),unpack=True)
+                    err=np.array([x for x in  exterrs[1]])
+                    err[err>args.Emax/2]=0
                 except:
                     print("Error reading external errors file.")
                     sys.exit()

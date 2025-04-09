@@ -11,6 +11,7 @@ from decimal import *
 #clrs=["#f21d2f","#2104d9","#f2ae2e"]
 #clrs=['#5764D9','#D97C57','#86D957']
 clrs=['#0000FF','#FF0000','#000000']+list(mpl.colors.TABLEAU_COLORS.keys())
+pres_colors=["#c1272d","#0000a7","#eba938","#008176","#b3b3b3","#4cb944"]
 mpl.rcParams['axes.linewidth'] = 3
 lnwd=5
 font = {'family' : 'sans',
@@ -39,11 +40,11 @@ def extract_data(file):
             data['xlabel']=" ".join(line.split()[3:len(line.split())])
         if 'yaxis  label' in line:
             data['ylabel']=" ".join(line.split()[3:len(line.split())])
-        if 's0 legend' in line:
+        if ' legend' in line:
             data['label']=" ".join(line.split()[3:len(line.split())])
     print("Found data with legend: {}".format(data['label']))
-    data['x']=[float(x.split()[0]) for x in lines if "#" not in x if "@" not in x]
-    data['y']=[float(x.split()[1]) for x in lines if "#" not in x if "@" not in x]
+    data['x']=[float(x.split()[0]) for x in lines if "#" not in x if "@" not in x if "&" not in x]
+    data['y']=[float(x.split()[1]) for x in lines if "#" not in x if "@" not in x if "&" not in x]
     return(data)
 
 def split_data(data,min,max):
@@ -69,11 +70,10 @@ def stack_data(data,magnitude):
         data_stack.append(entry)
     return(data_stack)
 
-def plot_data(data,files,legend,limx,limy,shade_min,shade_max,transparent,paper,fraction,clrs=clrs):
+def plot_data(data,files,legend,limx,limy,shade_min,shade_max,transparent,paper,fraction,pres,lnwd,clrs=clrs):
     #wd,hg=set_size(paper,fraction)
     wd=15
     hg=15
-    lnwd=5
     name="_".join(files).replace('_density','')
     if transparent:
         fig=plt.figure(figsize=(wd,hg),dpi=150,frameon=False)
@@ -83,9 +83,12 @@ def plot_data(data,files,legend,limx,limy,shade_min,shade_max,transparent,paper,
         ax=plt.subplot()
         ax.patch.set_facecolor('white')
     
-    
+    print(len(data))
     for x,i in enumerate(data):
-        plt.plot(i['x'],i['y'],'-',label=i['label'][1:-1],linewidth=lnwd,color=clrs[x])
+        if pres:
+            plt.plot(i['x'],i['y'],'-',label=i['label'][1:-1],linewidth=lnwd,color=pres_colors[x])
+        else:
+             plt.plot(i['x'],i['y'],'-',label=i['label'][1:-1],linewidth=lnwd,color=clrs[x])
     if shade_min:
         for k,val in enumerate(shade_min):
             plt.axvspan(val, shade_max[k], color='#989898', alpha=0.5, lw=0)
@@ -96,15 +99,19 @@ def plot_data(data,files,legend,limx,limy,shade_min,shade_max,transparent,paper,
         if legend[0] == "file":
             plt.legend()
         else:
-            plt.legend(args.legend,loc='center right')
-            #plt.legend(args.legend,loc='best')
+            plt.legend(args.legend,loc='best')
+            
             
     if limx:
         plt.xlim(limx)
     if limy:
         plt.ylim(limy)
-    plt.xlabel("{}".format(data[0]['xlabel'][1:-1].replace('\S','$^{').replace('\\N','}$').replace('\\','}$')))
-    plt.ylabel("{}".format(data[0]['ylabel'][1:-1].replace('\S','$^{').replace('\\N','}$')))
+    try:
+        plt.xlabel("{}".format(data[0]['xlabel'][1:-1].replace('\S','$^{').replace('\\N','}$').replace('\\','}$')))
+        plt.ylabel("{}".format(data[0]['ylabel'][1:-1].replace('\S','$^{').replace('\\N','}$')))
+    except:
+        plt.xlabel("x")
+        plt.ylabel("y")
     plt.tight_layout()
     plt.savefig('{}_plot.png'.format(name),format='png',facecolor=fig.get_facecolor(),transparent=transparent)
 
@@ -271,9 +278,10 @@ parser.add_argument('--ylim', dest='ylim',type=float,nargs=2)
 parser.add_argument('--stack', dest='stack',type=float,default=None)
 parser.add_argument('--split', dest='split',type=float,nargs=2)
 parser.add_argument('--area', dest='area',type=float)
+parser.add_argument('--pres', dest='pres',action='store_true')
 
 args = parser.parse_args()
-lw=3
+lw=1
 data=[]
 inputs=[]
 integrals=[]
@@ -307,7 +315,7 @@ if args.cumint:
     plot_interval_integral(split_mean,args.area,args.legend,args.xlim,args.ylim)
 
 
-plot_data(data,files,args.legend,args.xlim,args.ylim,args.shade_min,args.shade_max,args.trans,'a4',3)
+plot_data(data,files,args.legend,args.xlim,args.ylim,args.shade_min,args.shade_max,args.trans,'a4',4,args.pres,2)
 if args.split:
     plot_data_mean(data,split_mean,files,args.legend,[6,19],args.ylim,args.shade_min,args.shade_max,args.trans)
 

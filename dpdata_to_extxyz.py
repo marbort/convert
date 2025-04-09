@@ -12,6 +12,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--input', nargs='+', type=str, help='Input DPData type.raw files')
 parser.add_argument('--output', type=str,
                     help='Output xyz file')
+parser.add_argument('--offset', type=int, default=1,help='Save every nth frame')
 args = parser.parse_args()
 
 if args.input is None:
@@ -25,7 +26,7 @@ def make_xyz_file(dpdata_files, prefix):
     Parameters
     ----------
     dpdata_files : list of str
-        Input DPData files
+        Input DPData files type.raw
     fname : str
         Output xyz file
     return : None
@@ -41,7 +42,7 @@ def make_xyz_file(dpdata_files, prefix):
                 system = dpdata.System(path, fmt='deepmd/npy')
                 print(f"Energies not found. Using non labeled system")
             # for each frame
-            for ii in range(system.get_nframes()):
+            for ii in range(0,system.get_nframes(),args.offset):
                 # read the frame
                 positions = system['coords'][ii]
                 symbols = [system['atom_names'][type]

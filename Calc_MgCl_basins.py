@@ -68,14 +68,16 @@ def calc_percent_basins(colvar,cvs,mincv1,mincv2,tol,maxcv3,width,symm_minima,te
         histo_symm=[histo[list(histo.keys())[i]][0] for i in symm_minima]
         histo_symm_sum=[sum(x) for x in zip(*histo_symm)]
         percent_symm_sum=[x/sum(histo_symm_sum) for x in histo_symm_sum]
+        #print(histo,histo_symm_sum)
         return(points,histo,percent,histo_symm_sum,percent_symm_sum)
     
     else:
+        #print(histo,histo_symm_sum)
         return(points,histo,percent,histo_symm_sum,percent_symm_sum)
 
 def plot_histo(histo,maxcv3,width,symm_minima,histo_symm_sum):
     fig=plt.figure(figsize=(16,16),dpi=150)
-    
+    print(histo)
     for i,hist in enumerate(histo):
         plt.subplot(3,3,i+1)
         plt.xlim(0,maxcv3+width)
@@ -135,9 +137,9 @@ def main():
     points,histo,percent,histo_symm_sum,percent_symm_sum=calc_percent_basins(args.input,args.cvs,args.mincv1,\
                                                                             args.mincv2,args.tol,args.maxcv3,args.width,args.symm,args.temp)
     #print(histo_symm_sum)
-    plot_histo(histo,args.maxcv3,args.width,args.symm,histo_symm_sum)
+    #plot_histo(histo,args.maxcv3,args.width,args.symm,histo_symm_sum)
     #print(points,percent)
-    write_percentage(args.cvs,histo,percent,args.symm,percent_symm_sum)
+    #write_percentage(args.cvs,histo,percent,args.symm,percent_symm_sum)
 
 
 if __name__ == "__main__":

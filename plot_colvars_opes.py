@@ -1,6 +1,7 @@
 import pandas
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 def read_colvar(input):
     with open(input,'r') as ifile:
@@ -30,12 +31,20 @@ def histo_colvar(colvars,data):
     
 
 def get_colvars_meta(plumed):
+    parser = argparse.ArgumentParser(description='Extract colvars from plumed.dat')
+    parser.add_argument('--colvars', type=str, help='Colvars to extract', nargs='+', default=None)
+    
+    args=parser.parse_args()
+    
     colvars=[]
-    with open(plumed, 'r') as ifile:
-        lines=ifile.readlines()
-    for line in lines:
-        if "opes:" in line or "opes1:" in line  or "opes2:" in line:
-            colvars+=([x.split('=')[-1].split(',') for x in line.split() if "ARG" in x][0])
+    if args.colvars:
+        colvars=args.colvars
+    else:
+        with open(plumed, 'r') as ifile:
+            lines=ifile.readlines()
+        for line in lines:
+            if "opes:" in line or "opes1:" in line  or "opes2:" in line:
+                colvars+=([x.split('=')[-1].split(',') for x in line.split() if "ARG" in x][0])
     return(colvars)
 
 data=read_colvar('colvar')

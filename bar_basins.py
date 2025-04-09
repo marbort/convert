@@ -25,6 +25,7 @@ def bar_percentages(inputs):
     mpl.rcParams['lines.linewidth'] = 3
     shades=["#1c1c1c","#ffd7d7","#ffd7d7","#99ccff"]
     bars={}
+    stds={}
     x_vals=[]
     structs=["R=Me","R=Et","R=$i$Pr","R=$t$Bu"]
     titles=["(1,1)","(1,2)","(2,1)","(2,2)"]
@@ -40,36 +41,31 @@ def bar_percentages(inputs):
                     basin=line.split()[4]+line.split()[5]
                     print(basin)
                     bars_tmp=[]
+                    std_tmp=[]
                     for j in range(5):
-                        x_vals.append(lines[i+j+1].split(':')[0].split()[-1])
-                        bars_tmp.append(float(lines[i+j+1].split(':')[-1].rstrip()))
-                        bars_tmp=[0 if math.isnan(x) else x for x in bars_tmp]
+                        try:
+                            x_vals.append(lines[i+j+1].split(':')[0].split()[-1])
+                            bars_tmp.append(float(lines[i+j+1].split(':')[-1].split()[-2].rstrip()))
+                            std_tmp.append(float(lines[i+j+1].split(':')[-1].split()[-1].rstrip()))
+                            bars_tmp=[0 if math.isnan(x) else x for x in bars_tmp]
+                            std_tmp=[0 if math.isnan(x) else x for x in std_tmp]
+                            errors=True
+                        except:
+                            print("No errors")
+                            x_vals.append(lines[i+j+1].split(':')[0].split()[-1])
+                            bars_tmp.append(float(lines[i+j+1].split(':')[-1].rstrip()))
+                            bars_tmp=[0 if math.isnan(x) else x for x in bars_tmp]
                     if basin in list(bars.keys()):
                         bars[basin].append(bars_tmp)
+                        stds[basin].append(std_tmp)
                     else:
                         bars[basin]=[bars_tmp]
+                        stds[basin]=[std_tmp]
     x_vals=np.unique(x_vals)
    
     width=0.2
     print(len(bars))
     for k,bar in enumerate(bars):
-        """
-        if k==2:
-            continue
-        elif k==3:
-            plt.subplot(1,len(bars),k)
-            multiplier=0
-            for j,mol in enumerate(bars[bar]):
-                offset=width*multiplier
-                plt.bar([float(x)+offset for x in x_vals[1:]],mol[1:],width=width,label=structs[j])
-                multiplier+=1
-                xtix=[float(x)+width*len(bars[list(bars.keys())[0]][0])/2 for x in x_vals[1:]]
-                plt.xticks(xtix,labels=[0,1,2])
-                plt.xlabel("# of Bridging Cl")
-                plt.ylim([0,1.1])
-            plt.title(titles[k-1])
-        else:
-        """
         plt.subplot(1,4,k+1)
         ax=fig.gca()
         #ax.set_facecolor(shades[k])
@@ -78,6 +74,8 @@ def bar_percentages(inputs):
         for j,mol in enumerate(bars[bar]):
             offset=width*multiplier
             plt.bar([float(x)+offset for x in x_vals],mol,width=width,label=structs[j],color=pres_colors[j])
+            if errors:
+                plt.errorbar([float(x)+offset for x in x_vals],mol,yerr=stds[bar][j],fmt='o',color='black',elinewidth=5)
             multiplier+=1
         xtix=[float(x)+(width*(len(bars)-1))/2 for x in x_vals]
         print(xtix)

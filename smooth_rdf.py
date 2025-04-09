@@ -67,6 +67,9 @@ file=sys.argv[1]
 with open(file,'r') as ifile:
             out_name=ifile.name.replace('.xvg','_smooth.xvg')
             lines=ifile.readlines()
+if "smooth" in ifile.name:
+    print(f"File {ifile.name} already smoothed")
+    sys.exit()
 sel=[x.split()[-1][1:-1] for x in lines if re.findall('s.*legend',x)]
 parms=[k for k in lines if "#" in k or "@" in k  ]
 x=[float(k.split()[0]) for k in lines if "#" not in k if "@" not in k ]

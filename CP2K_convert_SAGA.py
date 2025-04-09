@@ -4,6 +4,7 @@ from re import T
 import numpy as np
 import argparse
 import shutil
+import MDAnalysis as mda
 
 parser = argparse.ArgumentParser(description='Plot data')
 
@@ -12,7 +13,12 @@ parser.add_argument('--offset', dest='offset', default=1,
                     type=int, help='save only every nth frame')
 parser.add_argument('--feval', dest='feval', action='store_true',
                     help='Extract forces in Force Eval format')
-
+parser.add_argument('--convert', dest='convert', action='store_true',
+                    help='Convert dcd to xyz')
+parser.add_argument('--topo', dest='topo', type=str,
+                    help='Topology file for dcd conversion')
+parser.add_argument('--enerfromforces', dest='ener_frc', action='store_true',
+                    help='Extract energy from forces file')
 
 
 parser.add_argument('--box', dest='box', type=float,
@@ -25,8 +31,17 @@ hartree_to_ev = 27.211399
 # This functions extracts coordinates and atom types from a CP2K trajectory
 # positions xyz file
 
+def convert_dcd_xyz(topo,file):
+    #convert a dcd file to xyz
+    u = mda.Universe(topo,file)
+    with mda.Writer(file.replace(".dcd", ".xyz"), n_atoms=u.atoms.n_atoms) as W:
+        for ts in u.trajectory:
+            W.write(u)  # write the coordinates of the current frame to the output file
+    return file.replace(".dcd", ".xyz")
 
-def extract_cp2k_coords(file, kind):
+    
+
+def extract_cp2k_coords(file, kind,ener_from_forces):
     traj_ener = np.empty(0)
     types_map = {}
     types = []
@@ -47,12 +62,6 @@ def extract_cp2k_coords(file, kind):
     nframes = len(lines)//(natom+2)
     print("Found {:d} frames".format(nframes))
     print("Extracting {:d} frames".format(nframes//args.offset))
-    traj_ener = [np.append(traj_ener, float(lines[args.offset*k*(natom+2)+1].split()[8].rstrip())*hartree_to_ev)
-                 for k in range(nframes//args.offset)]
-
-    time = [float(lines[args.offset*k*(natom+2)+1].split()[5].strip(','))
-            for k in range(max(nframes//args.offset,1))]
-    print(time[0])
 
     # group val in an array for each frame
     val = [[float(lines[args.offset*k*(natom+2)+i+2].split()[l])
@@ -74,30 +83,54 @@ def extract_cp2k_coords(file, kind):
     for i in atoms:
         types.append(types_map[i])
         # numbers.append(atoms_dict[i])
+    
+    if ener_from_forces:
+            print(f"Ciao {types_map}")
+            return(numbers,  val, val_sch, types, types_map, nframes, natom)
+        
+    else:
+        print(f"Ciao {types_map}")
+        traj_ener = [np.append(traj_ener, float(lines[args.offset*k*(natom+2)+1].split()[8].rstrip())*hartree_to_ev)
+                 for k in range(nframes//args.offset)]
 
-    return (numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom)
+        time = [float(lines[args.offset*k*(natom+2)+1].split()[5].strip(','))
+                for k in range(max(nframes//args.offset,1))]
+        print(time[0])
+        return (numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom)
 
 
 # This functions extracts forces from a CP2K trajectory forces xyz file
-def extract_cp2k_frc(file, time, natom):
+def extract_cp2k_frc(file, time, natom,ener_from_forces):
+    print(f"Ener from forces: {ener_from_forces}")
     uconv = 51.42208619083232  # from Ha/Bohr to eV/Å
-    print(time[0])
     print("Extracting Forces from {}".format(file))
     with open(file) as ifile:
         lines = ifile.readlines()
         nframes = len(lines)//(natom+2)
+    nframes = len(lines)//(natom+2)
+    traj_ener = np.empty(0)
+    if ener_from_forces:
+        traj_ener = [np.append(traj_ener, float(lines[args.offset*k*(natom+2)+1].split()[8].rstrip())*hartree_to_ev)
+                 for k in range(nframes//args.offset)]
+        time = [float(lines[args.offset*k*(natom+2)+1].split()[5].strip(','))
+                for k in range(max(nframes//args.offset,1))]
+        print(f"Time0: {time[0]}")
+    
 
-        # group val in an array for each frame
-        frc = [[float(lines[k*(natom+2)+i+2].split()[l])*uconv
-               for i in range(natom) for l in range(1, 4)]
-               for k in range(nframes) if float(lines[k*(natom+2)+1].split()[5].rstrip(',')) in time]
+    # group val in an array for each frame
+    frc = [[float(lines[k*(natom+2)+i+2].split()[l])*uconv
+            for i in range(natom) for l in range(1, 4)]
+            for k in range(nframes) if float(lines[k*(natom+2)+1].split()[5].rstrip(',')) in time]
 
-        # group val in an array for each element
-        frc_sch = [[[float(lines[k*(natom+2)+i+2].split()[l])*uconv
-                     for l in range(1, 4)] for i in range(natom)]
-                   for k in range(nframes) if float(lines[k*(natom+2)+1].split()[5].rstrip(',')) in time]
-
-    return (frc, frc_sch)
+    # group val in an array for each element
+    frc_sch = [[[float(lines[k*(natom+2)+i+2].split()[l])*uconv
+                    for l in range(1, 4)] for i in range(natom)]
+                for k in range(nframes) if float(lines[k*(natom+2)+1].split()[5].rstrip(',')) in time]
+    if ener_from_forces:
+        
+        return (frc, frc_sch,time,traj_ener)
+    else:
+        return (frc, frc_sch)
 
 # This functions takes a CP2K input file and a CP2K output file of
 # a single point force evaluation run and extracts coordinates, forces
@@ -123,6 +156,8 @@ def feval(file):
                 # print(line)
                 tmp = [float(line.split()[x]) for x in range(1, 4)]
                 crds = crds+tmp
+                if line.split()[0] not in types_map:
+                    types_map.append(line.split()[0])
                 # print(crds,len(crds))
             if "&COORD" in line:
                 start = True
@@ -150,11 +185,16 @@ def feval(file):
                             lines2[k+3].split()[i])*uconv for k in range(j, j+len(crds)//3) for i in range(3, 6)]
                         types = [int(lines2[k+3].split()[1]) -
                                  1 for k in range(j, j+len(crds)//3)]
+                        """
+                        
+                        
+                       
                         types_map_tmp = [str(lines2[k+3].split()[2])
                                          for k in range(j, j+len(crds)//3)]
                         for x in types_map_tmp:
                             if x not in types_map:
                                 types_map.append(x)
+                        """
                         frcs_found = True
             return (crds, nrg, frc, types, types_map, frcs_found, box)
         except:
@@ -179,11 +219,11 @@ def savenpy(kind, val, traj_energy, types_map, types, dir, set, box):
             print("Box not defined. May cause error in data conversion")
         np.save(dir+set+"{}".format("box"), box)
 
-    with open(dir+"type_map.raw", 'w') as ofile:
+    with open(os.path.join(dir,"type_map.raw"), 'w') as ofile:
         for i in types_map:
             ofile.write(i+"\n")
 
-    with open(dir+"type.raw", 'w') as ofile:
+    with open(os.path.join(dir,"type.raw"), 'w') as ofile:
         for i in types:
             ofile.write(str(i)+"\n")
 
@@ -207,6 +247,16 @@ time_crds = []
 time_frcs = []
 box_traj = []
 
+if args.convert:
+    for file in os.listdir("./"):
+        if file.endswith(".dcd"):
+            try:
+                file = convert_dcd_xyz(args.topo,file)
+            except:
+                print("Error converting file {}".format(file))
+                continue
+            print("Converted file {}".format(file))
+
 if args.feval:
     for file in os.listdir("./"):
         if file.endswith(".inp"):
@@ -219,31 +269,71 @@ if args.feval:
                 frc_traj.append(frc)
                 traj_energy_traj.append(nrg)
                 box_traj.append(box)
+    dir = "./dpdata/"
+    set = "/set.000/"
+    if os.path.isdir(dir):
+        shutil.move(dir, "backup")
+    os.makedirs(dir+set)
+
+    kind = "coord"
+    savenpy(kind, crds_traj, traj_energy_traj,
+            types_map, types, dir, set, box_traj)
+
+
+    if frcs_found:
+        savenpy_frcs(frc_traj, dir, set)
+    else:
+        print("No Forces Found. Creating fake array")
+        savefake_frcs(len(types), len(crds_traj), dir, set)
 
 
 else:
+    time=[]
     for file in os.listdir("./"):
         if file.endswith(".xyz"):
+            crds_traj = []
+            crds_sch_traj = []
+            frc_traj = []
+            frc_sch_traj = []
+            traj_energy_traj = []
+            numbers = []
+            time_crds = []
+            time_frcs = []
+            box_traj = []
+
             with open(file, 'r') as ifile:
                 if "pos" in ifile.name:
                     print("Extracting coordinates from {}".format(ifile.name))
                     kind = "crds"
-                    numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom = extract_cp2k_coords(
-                        ifile, kind)
-                    crds_traj = crds_traj+val
-                    crds_sch_traj = crds_sch_traj+val_sch
-                    time_crds = time_crds+time
-                    traj_energy_traj = traj_energy_traj+traj_ener
                     frc_file = ifile.name.replace('pos', 'frc')
+                    cell_file = ifile.name.replace('-pos', '').replace('.xyz', '.cell')
+                    if args.ener_frc:
+                        numbers, val, val_sch, types, types_map, nframes, natom = extract_cp2k_coords(
+                        ifile, kind,args.ener_frc)
+                    else:
+                        numbers, time, val, val_sch, traj_ener, types, types_map, nframes, natom = extract_cp2k_coords(
+                        ifile, kind,args.ener_frc)
+                        
+                    
                     try:
-                        frc, frc_sch = extract_cp2k_frc(frc_file, time, natom)
+                        if args.ener_frc:
+                                frc, frc_sch,time, traj_ener = extract_cp2k_frc(frc_file, time, natom,args.ener_frc)
+                        else:
+                                frc, frc_sch = extract_cp2k_frc(frc_file, time, natom,args.ener_frc)
                         frc_traj = frc_traj+frc
                         frc_sch_traj = frc_sch_traj+frc_sch
                         frcs_found = True
                     except:
                         print("No Forces Found. Skipping extraction")
                         frcs_found = False
-                    cell_file = ifile.name.replace('-pos', '').replace('.xyz', '.cell')
+                   
+                    
+                    crds_traj = crds_traj+val
+                    crds_sch_traj = crds_sch_traj+val_sch
+                    time_crds = time_crds+time
+                    traj_energy_traj = traj_energy_traj+traj_ener
+                   
+                    
                     if not args.box:
                         
                         # Extract Cell from CP2K output file and convert it to dpdata units
@@ -265,10 +355,33 @@ else:
 
                         except:
                             print("No Cell Found. Skipping extraction")
+
+                    dir = file.replace(".xyz", "_dpdata")
+                    print(types_map)
+                    set = "/set.000/"
+                    if os.path.isdir(dir):
+                        shutil.move(dir, f"backup_{dir}")
+                    os.makedirs(dir+set)
+
+                    kind = "coord"
+                    print(f"Types map: {types_map}")
+                    savenpy(kind, crds_traj, traj_energy_traj,
+                            types_map, types, dir, set, box_traj)
+
+
+                    if frcs_found:
+                        savenpy_frcs(frc_traj, dir, set)
+                    else:
+                        print("No Forces Found. Creating fake array")
+                        savefake_frcs(len(types), len(crds_traj), dir, set)
+
+#print(dir)
+#print(f"Types map: {types_map}")
+
                         
 
 
-
+"""
 
 dir = "./dpdata/"
 set = "/set.000/"
@@ -299,3 +412,4 @@ else:
 #                         help='Box dimensions in Angstrom')
 #     args = parser.parse_args()
 #     convert_cp2k_to_dpdata(args)
+"""

@@ -11,7 +11,7 @@ def intervals_extract(iterable):
         group = list(group)
         yield [group[0][1], group[-1][1]]
 
-def lastdcd_to_qmmm(topo,trj,sel,check):
+def lastdcd_to_qmmm(topo,trj,sel,check,test=None):
     u = mda.Universe(topo,trj,in_memory=True)
     check_atms=u.select_atoms(check)
     if len(check_atms) == 0:
@@ -40,22 +40,19 @@ def lastdcd_to_qmmm(topo,trj,sel,check):
     for i,idx in enumerate(atom_idx):
         QMmm_atoms[atom_elm[i]].append(idx+1)
     intervals=list(intervals_extract(atom_idx))
-    if 'N' not in list(QMmm_atoms.keys()):
-        chrg=len(QMmm_atoms['MG'])-len(QMmm_atoms['CL'])
-    else:
-        chrg=len(QMmm_atoms['MG'])+len(QMmm_atoms['N'])-len(QMmm_atoms['CL'])
-    with open(f"vmd_index_{val}_{chrg}.dat",'w') as ofile:
+    chrg=0
+    with open(f"vmd_index_{val}_{chrg}{test}.dat",'w') as ofile:
         for interval in intervals:
             try:
                 ofile.write(f"{interval[0]} to {interval[1]} ")
             except:
                 ofile.write(f"{interval[0]} ")
-    with open(f"residues_{val}_{chrg}.dat",'w') as ofile:
+    with open(f"residues_{val}_{chrg}{test}.dat",'w') as ofile:
         for resid in QMmm_residues:
                 ofile.write(f"{resid} ")
 
 
-    with open(f'QMMM_atoms_{val}_{chrg}.dat','w') as ofile:
+    with open(f'QMMM_atoms_{val}_{chrg}{test}.dat','w') as ofile:
         for i in QMmm_atoms:
             ofile.write("&QM_KIND {}\n ".format(i))
             ofile.write("MM_INDEX ")
@@ -65,21 +62,7 @@ def lastdcd_to_qmmm(topo,trj,sel,check):
             ofile.write("&END QM_KIND\n")
     return()
 
-def get_avg_Cl(Cl1,Cl2,topo,trj):
-    u = mda.Universe(topo,trj,in_memory=True)
-    val=trj.split('-')[0].split('_')[-1]
-    u.trajectory[-1]
-    Cl1_sel=u.select_atoms(f"name Cl1 and resid {Cl1}")
-    Cl2_sel=u.select_atoms(f"name Cl1 and resid {Cl2}")
-    Mg1_sel=u.select_atoms(f"name Mg1 and resid {Cl1}")
-    Mg2_sel=u.select_atoms(f"name Mg1 and resid {Cl2}")
-    Cl1_pos=Cl1_sel.positions[0]
-    Cl2_pos=Cl2_sel.positions[0]
-    Mg1_pos=Mg1_sel.positions[0]
-    Mg2_pos=Mg2_sel.positions[0]
-    avg=(Cl1_pos+Cl2_pos)/2
-    avg_Mg=(Mg1_pos+Mg2_pos)/2
-    return(Cl1_pos,Cl2_pos,Mg1_pos,Mg2_pos,avg,avg_Mg)
+
     
     
     
@@ -95,15 +78,17 @@ print(inputs)
 
 
 for input in inputs:
-    Cl1_pos,Cl2_pos,Mg1_pos,Mg2_pos,avg,avg_Mg=get_avg_Cl(4,46,topo,input)
-    Cl_avg_pos=" ".join([str(x) for x in avg])
-    Mg_avg_pos=" ".join([str(x) for x in avg_Mg])
+    #Cl1_pos,Cl2_pos,Mg1_pos,Mg2_pos,avg,avg_Mg=get_avg_Cl(4,46,topo,input)
+    #Cl_avg_pos=" ".join([str(x) for x in avg])
+    #Mg_avg_pos=" ".join([str(x) for x in avg_Mg])
     #sel=f"byres point {Cl_avg_pos} 8.0"
     #sel=f"resid 4 44 or (not resname IM2 and (byres point {Cl_avg_pos} {radius} and not resid 6223))"
-    check="resname IMC"
-    sel=f"resname IMC or (not resname IM2 and (byres point {Mg_avg_pos} {radius} and not resid 6223))"
+    check="resname L1A"
+    sel_test="resname L1A"
+    sel=f"not resname WAT and (resname L1A or byres around {radius} resname L1A)"
     #sel=f"bynum 115 to 126 or bynum 1635 to 1646 or (not resname IM2 and (byres point {Mg_avg_pos} {radius}))"
     print(input)
-    print(Cl1_pos,Cl2_pos,Cl_avg_pos)
+    #print(Cl1_pos,Cl2_pos,Cl_avg_pos)
     print(f"Extracting atoms from sel: {sel}")
     lastdcd_to_qmmm(topo,input,sel,check)
+    lastdcd_to_qmmm(topo,input,sel_test,check,"test")
