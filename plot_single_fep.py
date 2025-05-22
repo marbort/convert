@@ -5,7 +5,7 @@ import os
 import glob
 import plumed
 import argparse
-import sys
+
 import numpy as np
 
 
@@ -20,21 +20,25 @@ def extract_data(input,zmax):
     return(file[0],file[1],file[2])
 
 
-def plot_single(cv,fes,err,file,labx):
-    fig=plt.figure(figsize=(16,10),dpi=150)
+def plot_single(cv,fes,err,file,labx,fig,zmax=100,labels=None,idx=0):
+    
     font = {'family' : 'sans',
         'weight' : 'normal',
         'size'   : 32}
     mpl.rc('font', **font)
-    plt.plot(cv,fes,label="CV")
-    plt.fill_between(cv,fes+err,fes-err,alpha=0.2)
+    pres_colors=["#c1272d","#0000a7","#eba938","#008176","#b3b3b3","#4cb944"]
+    fig=fig
+    plt.plot(cv,fes,label=labels[idx],color=pres_colors[idx],linewidth=3)
+    plt.fill_between(cv,fes+err,fes-err,alpha=0.2,color=pres_colors[idx])
     plt.xlabel(labx)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
-    plt.ylim([-1.,70])
+    plt.ylim([-1.,float(zmax)])
+    if labels is not None:
+        plt.legend(loc='upper right')
     #plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
-    plt.savefig('{}_single.png'.format(file),format='png')
+    
 
 def main():
     mpl.rcParams['axes.linewidth'] = 3
@@ -42,19 +46,38 @@ def main():
     
     cmap_active=mpl.colormaps['rainbow']
     colors=[cmap_active(0),cmap_active(0.5),cmap_active(0.75),cmap_active(1.0)]
-    file=sys.argv[1]
-    labx=sys.argv[2]
-    zmax=sys.argv[3]
     
-
-    cv,fes,err=extract_data(file,zmax)
-    #cv1_state,cv2_state,free_grid_state,min_pt_state=extract_data(sys.argv[2])
-    #print(cv1[min_pt[1][0]],cv2[min_pt[0][0]],free_grid[min_pt[0][0],min_pt[1][0]])
-    file=os.path.splitext(sys.argv[1])[0]
+    parser = argparse.ArgumentParser(description='Plot free energy surface')
+    parser.add_argument('--input', type=str, help='Input file',default=None)
+    parser.add_argument('--paths', type=str, help='File with paths to inputs',default='paths.txt')
+    parser.add_argument('--labx', type=str, help='Label for x-axis',default='CV1')
+    parser.add_argument('--zmax', type=float, help='Maximum z value',default=100)
+    parser.add_argument('--labels', type=str, help='Labels for the curves',default="FES", nargs='+')
+    args = parser.parse_args()
     
     
-   
-    plot_single(cv,fes,err,file,labx)
+    fig=plt.figure(figsize=(16,10),dpi=150)
+    try:
+        files=glob.glob(args.input)
+    except:
+        try:
+            print("No input file found, reading from paths.txt")
+            with open(args.paths,'r') as ifile:
+                files=ifile.readlines()
+                files=[x.strip() for x in files]
+            print(files)
+        except:
+            print("No input file found, exiting")
+            exit()
+        
+    for i,file in enumerate(files):
+        cv,fes,err=extract_data(file,args.zmax)
+        plot_single(cv,fes,err,file,args.labx,fig,args.zmax,args.labels,i)
+    plt.savefig('fes_single.png',format='png')
+        
+        
+        
+        
    
 
 if __name__ == "__main__":

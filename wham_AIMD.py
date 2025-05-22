@@ -106,7 +106,9 @@ def main():
     parser.add_argument('--sep' , dest='sep',default='_',help='Separator to get restrain position')
     parser.add_argument('--restart' , dest='restart',action='store_true', default=False, help='Use CP2K restart for restraint parameters',)
     parser.add_argument('--skip' , dest='skip',default=1000, type=int,help='Number of lines to skip from colvar file')
-    parser.add_argument('--nbins' , dest='nbins', type=str, default="0.1",help='Size of the bins for WHAM')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--nbins' , dest='nbins', type=str, default=50,help='N7umber of bins for WHAM')
+    group.add_argument('--binsize' , dest='binsize', type=str, default="0.1",help='Size of the bins for WHAM')
     parser.add_argument('--temp' , dest='temp',type=str, default="300",help='Temperature for WHAM')
     parser.add_argument('--fac' , dest='fac',type=float, default=1.89,help='Conversion factor between at in filename and in colvar. Default: 1.89')
     parser.add_argument('--tol' , dest='tol',type=str, default="1e-5",help='Tolerance for WHAM. Default 1e-5')
@@ -133,7 +135,10 @@ def main():
             maxwham=float(end)/args.fac
     print(f"Get range from trajectory: {args.wham}")
     print(f"WHAM range: {minwham*args.fac:.2f} to {maxwham*args.fac:.2f}")
-    nbins=int((maxwham-minwham)*args.fac/float(args.nbins))
+    if args.nbins:
+        nbins=int(args.nbins)
+    if args.binsize:
+        nbins=int((maxwham-minwham)*args.fac/float(args.binsize))
     
     for file in files:
         with open(file,'r') as ifile:

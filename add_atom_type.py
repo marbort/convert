@@ -4,6 +4,7 @@ import argparse
 import os
 import numpy as np
 
+
 def add_new_atom_type(position_dict,tset,subst,name,output):
     pairs_dict = json.load(open(position_dict))
     data=dp.LabeledSystem(tset,'deepmd/npy')

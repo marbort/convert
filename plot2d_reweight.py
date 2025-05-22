@@ -264,8 +264,9 @@ def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
     print(max(x), max(y))
     tix = np.linspace(0, round(max(x)), round(round(max(x)) / 0.5) + 1)
     tiy = np.linspace(0, round(max(y)), round(round(max(y)) / 0.5) + 1)
-    print(tix)
+    print(tix,tiy,max(x), max(y))
     # plt.clabel(CLines,levels=range(0,MAX,20), inline=True, fontsize=16,colors='black')
+    print(f"Plotting {file} with xlim {plt.xlim()} and ylim {plt.ylim()}")
     plt.contourf(x, y, value, lev, vmin=0, vmax=MAX, cmap=cmap)
     plt.xticks(tix, labels=[str(round(x, 1)) for x in tix])
     plt.yticks(tiy)
@@ -296,7 +297,7 @@ def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
     # plt.scatter(x[minima[0]],y[minima[1]])
     # plt.scatter(x[maxima[0]],y[maxima[1]],color='red')
     # plt.xlim([0.75,3.25])
-    # plt.ylim([0.75,3.25])
+    # plt.ylim([0.0,1.5])
     if minima:
         min_crd = []
         with open(minima, "r") as ifile:
@@ -414,7 +415,7 @@ def plot_convergence(inputs):
                     data = np.loadtxt(ifile, unpack=True)
                 plt.plot(data[0], data[1], label=i, linewidth=2, color=colors[i])
             plt.ylim([-5, 125])
-            plt.legend()
+            plt.legend(ncols=5)
             plt.savefig(f"{input}_convergence.png", format="png")
 
 

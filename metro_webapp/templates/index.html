@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Grid Example</title>
+
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: auto auto auto auto auto;
+            grid-template-rows: auto auto auto auto auto;
+            gap: 10px;
+            background-color: #f2f2f2;
+            padding: 10px;
+        }
+        .grid-item {
+            background-color: rgba(255, 255, 255, 0.8);
+            color:black;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            font-size: 22px;
+        }
+        .Line1 {
+            background-color: rgba(255, 255, 255, 0.8);
+            color:lightblue;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            padding: 20px;
+            font-size: 20px;
+        }
+        .Line2 {
+            background-color: rgba(255, 255, 255, 0.8);
+            color: orangered;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            padding: 20px;
+            font-size: 20px;
+        }
+        .Line3 {
+            background-color: rgba(255, 255, 255, 0.8);
+            color:purple;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            padding: 20px;
+            font-size: 20px;
+        }
+        .Line4 {
+            background-color: rgba(255, 255, 255, 0.8);
+            color:darkblue;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            padding: 20px;
+            font-size: 20px;
+        }
+        .Line5 {
+            background-color: rgba(255, 255, 255, 0.8);
+            color:green;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+            padding: 20px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Departures from Blindern</h1>
+    <div class="grid-container">
+        <div class="grid-item">Line</div>
+        <div class="grid-item">Destination</div>
+        <div class="grid-item">Time</div>
+        <div class="grid-item">Expected</div>
+        <div class="grid-item">Delay</div>
+        {% for item in data1 %}
+        {% if item['Line'] == 'Line 1' %}
+        <div class="Line1">{{ item['Line'] }}</div>
+        <div class="Line1">{{ item['Destination'] }}</div>
+        <div class="Line1">{{ item['Time'] }}</div>
+        <div class="Line1">{{ item['Expected'] }}</div>
+        <div class="Line1">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 2' %}
+        <div class="Line2">{{ item['Line'] }}</div>
+        <div class="Line2">{{ item['Destination'] }}</div>
+        <div class="Line2">{{ item['Time'] }}</div>
+        <div class="Line2">{{ item['Expected'] }}</div>
+        <div class="Line2">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 3' %}
+        <div class="Line3">{{ item['Line'] }}</div>
+        <div class="Line3">{{ item['Destination'] }}</div>
+        <div class="Line3">{{ item['Time'] }}</div>
+        <div class="Line3">{{ item['Expected'] }}</div>
+        <div class="Line3">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 4' %}
+        <div class="Line4">{{ item['Line'] }}</div>
+        <div class="Line4">{{ item['Destination'] }}</div>
+        <div class="Line4">{{ item['Time'] }}</div>
+        <div class="Line4">{{ item['Expected'] }}</div>
+        <div class="Line4">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 5' %}
+        <div class="Line5">{{ item['Line'] }}</div>
+        <div class="Line5">{{ item['Destination'] }}</div>
+        <div class="Line5">{{ item['Time'] }}</div>
+        <div class="Line5">{{ item['Expected'] }}</div>
+        <div class="Line5">{{ item['Delay'] }}</div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    <h1>Departures from Kalbakken</h1>
+    <div class="grid-container">
+        <div class="grid-item">Line</div>
+        <div class="grid-item">Destination</div>
+        <div class="grid-item">Time</div>
+        <div class="grid-item">Expected</div>
+        <div class="grid-item">Delay</div>
+        {% for item in data2 %}
+        {% if item['Line'] == 'Line 1' %}
+        <div class="Line1">{{ item['Line'] }}</div>
+        <div class="Line1">{{ item['Destination'] }}</div>
+        <div class="Line1">{{ item['Time'] }}</div>
+        <div class="Line1">{{ item['Expected'] }}</div>
+        <div class="Line1">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 2' %}
+        <div class="Line2">{{ item['Line'] }}</div>
+        <div class="Line2">{{ item['Destination'] }}</div>
+        <div class="Line2">{{ item['Time'] }}</div>
+        <div class="Line2">{{ item['Expected'] }}</div>
+        <div class="Line2">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 3' %}
+        <div class="Line3">{{ item['Line'] }}</div>
+        <div class="Line3">{{ item['Destination'] }}</div>
+        <div class="Line3">{{ item['Time'] }}</div>
+        <div class="Line3">{{ item['Expected'] }}</div>
+        <div class="Line3">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 4' %}
+        <div class="Line4">{{ item['Line'] }}</div>
+        <div class="Line4">{{ item['Destination'] }}</div>
+        <div class="Line4">{{ item['Time'] }}</div>
+        <div class="Line4">{{ item['Expected'] }}</div>
+        <div class="Line4">{{ item['Delay'] }}</div>
+        {% elif item['Line'] == 'Line 5' %}
+        <div class="Line5">{{ item['Line'] }}</div>
+        <div class="Line5">{{ item['Destination'] }}</div>
+        <div class="Line5">{{ item['Time'] }}</div>
+        <div class="Line5">{{ item['Expected'] }}</div>
+        <div class="Line5">{{ item['Delay'] }}</div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</body>
+</html>

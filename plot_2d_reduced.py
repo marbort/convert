@@ -58,6 +58,7 @@ def main():
         'size'   : 32}
     mpl.rc('font', **font)
     mpl.rcParams['axes.linewidth'] = 3
+    MIN=0
     for i,input in enumerate(args.input):
         path=os.path.dirname(input)
         cv_min=0
@@ -70,12 +71,16 @@ def main():
             err_cv1[err_cv1>args.Emax/2]=0
         min_path_cv1[min_path_cv1>args.Emax]=args.Emax
         
-        #print(err_cv1)
         
         if args.min:
              cv_min=find_nearest(cv1,args.min)
+             print(f"Rescaling FES of {args.labels[i]} by {min_path_cv1[np.where(cv1==cv_min)]}")
+             if min(np.subtract(min_path_cv1,min_path_cv1[np.where(cv1==cv_min)]))<MIN:
+                 MIN=min(np.subtract(min_path_cv1,min_path_cv1[np.where(cv1==cv_min)]))
              plt.plot(cv1,[x-min_path_cv1[np.where(cv1==cv_min)] for x in min_path_cv1],label=args.labels[i],linewidth=lw,color=pres_colors[i])
         else:
+            if min(min_path_cv1)<MIN:
+                 MIN=min(min_path_cv1)
             plt.plot(cv1,min_path_cv1,label=args.labels[i],color=pres_colors[i],linewidth=lw)
         
         if args.errors:
@@ -100,7 +105,7 @@ def main():
     plt.xlabel(args.xlab)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.8,2.2])
-    plt.ylim([-5,args.limy])
+    plt.ylim([MIN-5,args.limy])
     plt.title(args.title,y=1.05)
     plt.legend(loc='center left',bbox_to_anchor=(1, 0.5),frameon=False)
     plt.tight_layout()

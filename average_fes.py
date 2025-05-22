@@ -1,13 +1,17 @@
 import numpy as np
 import argparse
 
-def average_fes(paths):
+def average_fes(paths,oned=False):
     fes = []
+    std_fes = []
     for path in paths:
+        print(path)
         fes.append(np.loadtxt(path))
     fes = np.array(fes)
     avg_fes = np.mean(fes, axis=0)
-    return avg_fes
+    if oned:
+        std_fes = np.std(fes, axis=0)
+    return avg_fes,std_fes
 #symmetrize the FES respect to the x=y line
 def symmetrize_fes(fes):
     cv1_temp = fes[:,0]
@@ -29,9 +33,14 @@ def main():
     parser.add_argument('fes', nargs='+', help='FES files to average')
     parser.add_argument('-o', '--output', help='Output file')
     parser.add_argument('--symm', action='store_true', help='Symmetrize the FES')
+    parser.add_argument('--oned', action='store_true', help='1D FES')
+    
     args = parser.parse_args()
 
-    avg_fes = average_fes(args.fes)
+    avg_fes,std_fes = average_fes(args.fes,args.oned)
+    if args.oned:
+        avg_fes[:,-1] = std_fes[:,-2]
+    
     if args.symm:
         avg_fes_sym = symmetrize_fes(avg_fes)
     if args.output:
