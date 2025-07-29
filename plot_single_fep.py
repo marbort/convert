@@ -15,8 +15,10 @@ def extract_data(input,zmax):
     
     with open(input,'r') as ifile:
         file=np.loadtxt(ifile,unpack=True)
-    #print(file)
     file[1][file[1]>float(zmax)]=float(zmax)
+    if len(file)==2:
+       print("Errors not found")
+       file = np.append(file, [np.zeros_like(file[1])],axis=0)
     return(file[0],file[1],file[2])
 
 
