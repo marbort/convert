@@ -35,11 +35,13 @@ def plot_single(cv,fes,err,file,labx,fig,zmax=100,labels=None,idx=0):
     plt.xlabel(labx)
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
-    plt.ylim([-1.,float(zmax)])
+    #plt.ylim([-1.,float(zmax)])
     if labels is not None:
-        plt.legend(loc='upper right')
+        plt.legend(loc='center left',bbox_to_anchor=(1, 0.5),frameon=False)
+    plt.tight_layout()
     #plt.legend()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
+    return(min(fes))
     
 
 def main():
@@ -55,6 +57,7 @@ def main():
     parser.add_argument('--labx', type=str, help='Label for x-axis',default='CV1')
     parser.add_argument('--zmax', type=float, help='Maximum z value',default=100)
     parser.add_argument('--labels', type=str, help='Labels for the curves',default="FES", nargs='+')
+    parser.add_argument('--min', type=float, help='Minimum at x value',default=0.0)
     args = parser.parse_args()
     
     
@@ -74,7 +77,17 @@ def main():
         
     for i,file in enumerate(files):
         cv,fes,err=extract_data(file,args.zmax)
-        plot_single(cv,fes,err,file,args.labx,fig,args.zmax,args.labels,i)
+        diff=[abs(x-args.min) for x in cv]
+        idx=diff.index(min(diff))
+        shift=fes[idx]
+        fes=fes-shift
+        miny=plot_single(cv,fes,err,file,args.labx,fig,args.zmax,args.labels,i)
+        if i == 0:
+            min_fes=miny
+        else:
+            if miny < min_fes:
+                min_fes=miny
+        plt.ylim([min_fes-5,args.zmax-shift])
     plt.savefig('fes_single.png',format='png')
         
         

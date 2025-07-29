@@ -42,7 +42,7 @@ for slice in slices['cv1']:
             slice_tmp[0].append(data[1][i])
             slice_tmp[1].append(data[2][i])
     slice_tmp[1]=slice_tmp[1]-min(slice_tmp[1])
-    graphs['cv1'][slice]=slice_tmp
+    graphs['cv1'][cv1[slice]]=slice_tmp
 
 for slice in slices['cv2']:
     slice_tmp=[[],[]]

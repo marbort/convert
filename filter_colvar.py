@@ -10,7 +10,7 @@ parser.add_argument('--colvar', type=str, help='Colvar file to filter', default=
 parser.add_argument('--col', type=str, help='Columns to filter', default="CV1")
 parser.add_argument('--valrange', type=float, help='Value to filter', nargs=2, default=[0,1])
 parser.add_argument('--stride', type=float, help='Stride to filter', default=1)
-parser.add_argument('--keep', action='store_true', help='Keep all columns')
+parser.add_argument('--keep', help='Keep additional columns', default=[] ,nargs='+')
 
 args=parser.parse_args()
 filename = args.colvar
@@ -18,7 +18,7 @@ with open(filename, 'r') as f:
     fields = f.readline()
     colnames = fields.split()[2:]
 print(colnames)
-if args.keep:
+if args.keep[0] == "all":
     data=pd.read_table(filename,dtype=float,sep='\s+',comment='#',header=None,names=colnames)
     data=data.iloc[::int(args.stride),:]
     colnum=colnames.index(args.col)
@@ -29,10 +29,10 @@ if args.keep:
         file.seek(0, 0)
         file.write(fields.rstrip('\r\n') + '\n' + content)
 else:
-    data=pd.read_table(filename,dtype=float,sep='\s+',comment='#',header=None,names=colnames,usecols=["time",args.col])
+    data=pd.read_table(filename,dtype=float,sep='\s+',comment='#',header=None,names=colnames,usecols=["time",args.col]+args.keep)
     data=data.iloc[::int(args.stride),:]
     data.reset_index(drop=True, inplace=True)
-    data_filtered=data[(data.iloc[:,1] >= args.valrange[0]) & (data.iloc[:,1] <= args.valrange[1])]
+    data_filtered=data[(data[args.col] >= args.valrange[0]) & (data[args.col] <= args.valrange[1])]
     data_filtered.to_csv(f"{filename}_{args.col}_{args.valrange[0]}to{args.valrange[1]}", sep=' ', header=True, index=True)
 
 """

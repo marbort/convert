@@ -1,0 +1,95 @@
+color change rgb 9    0.968627 0.372549 0.607843
+color change rgb 21   0.066667 0.611765 0.909804
+
+color Element Mg pink
+color Element Cl cyan2
+color Element C  silver
+
+menu main on
+
+mol default color {element}
+#mol default style {lines 0.100000 1.000000 1.000000 0}
+mol default material {Diffuse}
+
+after idle {
+
+    # create dummy molecule with one atom
+
+    set mol [mol new atoms 1]
+
+    set sel [atomselect $mol all]
+
+    # add items to color categories
+
+    $sel set name 1
+    $sel set name 2
+    $sel set name 3
+    $sel set name 4
+    $sel set name 5
+    $sel set name 6
+
+    $sel set type 1
+    $sel set type 2
+    $sel set type 3
+    $sel set type 4
+    $sel set type 5
+    $sel set type 6
+    $sel set type 7
+    $sel set type 8
+
+
+    # now we can define colors
+
+    color Name 1 gray
+
+    color Name 2 red
+
+    color Name 3 white
+
+    color Name 4 pink
+
+    color Name 5 cyan2
+    
+    color Name 6 tan
+
+    color Type 1 gray
+
+    color Type 2 red
+
+    color Type 3 white
+
+    color Type 4 cyan2
+
+    color Type 5 yellow
+    
+    color Type 6 pink
+    
+    color Type 7 purple
+    
+    color Type 8 tan
+    # clean up
+
+    $sel delete
+
+    mol delete $mol
+    
+
+}
+
+  color change rgb  0 0.1 0.2 0.7 ;# blue
+
+  color change rgb  1 0.7 0.2 0.1 ;# red
+
+  color change rgb  3 0.7 0.4 0.0 ;# orange
+
+  color change rgb  4 0.8 0.7 0.1 ;# yellow
+
+  color change rgb  7 0.1 0.7 0.2 ;# green
+
+  color change rgb 10 0.1 0.7 0.8 ;# cyan
+
+  color change rgb 11 0.6 0.1 0.6 ;# purple
+
+  display projection Orthographic
+  display depthcue off
+  display rendermode GLSL
