@@ -1,0 +1,91 @@
+# Apptainer definition for arm64 with DeepMD-kit (GPU) and LAMMPS
+# Base image: openSUSE Leap (arm64v8 for cross-platform builds)
+# Installation method: Pip (DeepMD-kit 3.0+)
+
+Bootstrap: docker
+From: opensuse/leap:latest
+
+%post
+    # Initialize machine-id early for systemd/dbus package scriptlets
+    mkdir -p /var/lib/dbus
+    cat /proc/sys/kernel/random/uuid | tr -d '-' > /var/lib/dbus/machine-id
+    ln -sf /var/lib/dbus/machine-id /etc/machine-id
+
+    # Install dbus-1-tools first to provide dbus-uuidgen
+    zypper --non-interactive install dbus-1-tools
+
+    # Update system and install basic dependencies
+    zypper --non-interactive update
+    zypper --non-interactive install --no-recommends python3 python3-pip python3-devel mpich-devel wget git gcc-c++ make
+    
+    # Dynamically detect openSUSE version and add Science repository
+    . /etc/os-release
+    REPO_URL="https://download.opensuse.org/repositories/science/openSUSE_Leap_${VERSION_ID}/"
+    echo "Adding repository: $REPO_URL"
+    zypper addrepo -f "$REPO_URL" science || true
+    zypper --non-interactive refresh
+    zypper --non-interactive install lammps lammps-devel
+
+    # Update pip and set up environment for install
+    pip3 install --upgrade pip
+    
+    # Install DeepMD-kit with GPU, LAMMPS plugin, and CUDA support via pip
+    # Note: cu12 targeting CUDA 12. Adjust if target host uses different CUDA version.
+    pip3 install "deepmd-kit[gpu,cu12,lmp]"
+
+    # Locate the LAMMPS plugin installed by deepmd-kit and set a permanent location if possible
+    # Usually it's in the python site-packages. We'll set the environment variable in %environment.
+    
+    zypper clean -a
+
+%environment
+    export LC_ALL=C
+    export PATH=/usr/bin:$PATH
+    
+    # DeepMD-kit and LAMMPS Plugin Path
+    # Determine site-packages path (approximate, better to use python -c in runscript or here)
+    export SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
+    export LAMMPS_PLUGIN_PATH=$SITE_PACKAGES/deepmd/lib:$LAMMPS_PLUGIN_PATH
+    
+    # GPU Support inside the container
+    export NVIDIA_VISIBLE_DEVICES=all
+    export NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+%runscript
+    echo "--- Container Info ---"
+    echo "OS: $(cat /etc/os-release | grep PRETTY_NAME)"
+    echo "Arch: $(uname -m)"
+    echo "----------------------"
+    
+    python3 --version
+    dp --version
+    
+    echo "Verifying LAMMPS DeepMD plugin availability..."
+    # Check if we can find the plugin
+    if [ -d "$SITE_PACKAGES/deepmd/lib" ]; then
+        echo "Found DeepMD LAMMPS plugin at: $SITE_PACKAGES/deepmd/lib"
+    else
+        echo "Warning: DeepMD LAMMPS plugin directory not found in $SITE_PACKAGES/deepmd/lib"
+    fi
+    
+    lmp -h | head -n 1
+
+%labels
+    Author Marco
+    Version 3.0
+    Description arm64 SUSE Apptainer with DeepMD-kit 3.0 (Pip, GPU) & LAMMPS
+    Arch aarch64
+
+%help
+    This container provides a SUSE Leap environment for arm64 (aarch64)
+    with DeepMD-kit 3.0+, LAMMPS, and GPU support (via CUDA 12).
+    The installation uses the modern pip-based approach.
+
+    BUILDING (on x86_64 host):
+    1. Ensure QEMU is set up:
+       docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    2. Build the image:
+       apptainer build --arch arm64 deepmd_suse_arm64.sif Apptainer.def
+
+    RUNNING (with GPU support):
+       apptainer run --nv deepmd_suse_arm64.sif

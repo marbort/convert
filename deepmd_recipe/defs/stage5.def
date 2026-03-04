@@ -1,0 +1,74 @@
+Bootstrap: localimage
+From: stage4.sif
+
+%post
+
+source /version.conf
+
+LAMMPS_INSTALL_DIR=/opt/lammps
+PLUMED_INSTALL_DIR=/opt/plumed
+
+mkdir -p $LAMMPS_INSTALL_DIR
+
+source /.init-module-build.sh
+
+module load CrayEnv
+module load PrgEnv-gnu craype-network-none buildtools
+module load libfabric
+module load rocm/6.3.4-container
+module load pytorch
+module load plumed
+
+module rm cray-libsci
+
+# Install LAMMPS
+curl -LO https://github.com/lammps/lammps/archive/refs/tags/$LAMMPS_VERSION.tar.gz
+tar xf $LAMMPS_VERSION.tar.gz
+
+export HIPCC_COMPILE_FLAGS_APPEND="-std=c++17 -isystem ${CRAY_MPICH_PREFIX}/include "
+export HIPCC_LINK_FLAGS_APPEND="-fuse-ld=bfd -Wl,--no-keep-memory -L${CRAY_MPICH_PREFIX}/lib -lmpi ${PE_MPICH_GTL_DIR_amd_gfx90a} ${PE_MPICH_GTL_LIBS_amd_gfx90a} "
+
+cd lammps-$LAMMPS_VERSION
+
+mkdir build && cd build
+
+cmake \
+    -D CMAKE_INSTALL_PREFIX=$LAMMPS_INSTALL_DIR \
+    -D BUILD_SHARED_LIBS=on \
+    -D BUILD_MPI=on \
+    -D PKG_PLUMED=on \
+    -D PLUMED_ROOT=$PLUMED_INSTALL_DIR \
+    -D BUILD_MPI=yes \
+    -D PKG_PLUMED=yes \
+    -D PLUMED_MODE=runtime \
+    -D DOWNLOAD_PLUMED=NO \
+    -D GPU_API=HIP \
+    -D HIP_PATH=/opt/rocm-$ROCM_VERSION/ \
+    -D HIP_ARCH=gfx90a \
+    -D PKG_OPENMP=yes \
+    -D PKG_PLUGIN=ON \
+    -D PKG_KSPACE=ON \
+    -D PKG_RIGID=ON \
+    -D PKG_EXTRA-FIX=ON \
+    -D PKG_EXTRA-DUMP=ON \
+    -D LAMMPS_INSTALL_RPATH=ON \
+    -DBUILD_SHARED_LIBS=yes \
+    ../cmake
+
+make -j$(nproc)
+make install
+cd /
+rm -rf lammps-$LAMMPS_VERSION $LAMMPS_VERSION.tar.gz
+
+mkdir -p /opt/container_modules/lammps
+
+cat >/opt/container_modules/lammps/$LAMMPS_VERSION.lua <<EOF2
+local root="$LAMMPS_INSTALL_DIR"
+
+if not isloaded("plumed") then
+  load("plumed")
+end
+
+prepend_path("PATH", pathJoin(root, "bin"))
+prepend_path("LD_LIBRARY_PATH", pathJoin(root, "lib"))
+EOF2

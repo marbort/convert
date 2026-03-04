@@ -1,0 +1,75 @@
+Bootstrap: docker
+From: nvidia/cuda:12.2.0-base-ubuntu22.04-sbsa
+
+%post
+    # This definition file builds a Singularity container with DeePMD-kit and LAMMPS
+    # for NVIDIA arm64-based systems.
+
+    # Stop on errors
+    set -e
+
+    # Update and install dependencies
+    apt-get update && apt-get install -y \
+        build-essential \
+        cmake \
+        git \
+        python3 \
+        python3-pip \
+        wget
+
+    # Install TensorFlow for arm64 with CUDA support
+    # This might need to be adjusted based on the specific TensorFlow and CUDA versions
+    pip3 install tensorflow[and-cuda]
+
+    # Create a directory for source code
+    mkdir -p /opt/build
+    cd /opt/build
+
+    # Download sources
+    git clone --recursive https://github.com/deepmodeling/deepmd-kit.git
+    git clone -b stable_2Aug2023_update3 https://github.com/lammps/lammps.git
+
+    # Install LAMMPS
+    cd lammps
+    mkdir build && cd build
+    cmake \
+          -D BUILD_MPI=yes \
+          -D PKG_PLUMED=yes \
+          -D PLUMED_MODE=runtime \
+          -D DOWNLOAD_PLUMED=NO \
+          -D PKG_OPENMP=yes \
+          -D PKG_PLUGIN=ON \
+          -D PKG_KSPACE=ON \
+          -D PKG_RIGID=ON \
+          -D PKG_EXTRA-FIX=ON \
+          -D PKG_EXTRA-DUMP=ON \
+          -D LAMMPS_INSTALL_RPATH=ON \
+          -D BUILD_SHARED_LIBS=yes \
+          -D CMAKE_INSTALL_PREFIX=$LAMMPS_INSTALL \
+         ../cmake
+
+    make -j$(nproc)
+    make install
+    cd ../..
+
+    # Install DeePMD-kit
+    cd deepmd-kit
+    pip install -r requirements.txt
+    mkdir build && cd build
+    cmake -DUSE_CUDA_TOOLKIT=ON -DLAMMPS_SOURCE_ROOT=/opt/build/lammps ..
+    make -j$(nproc)
+    make install
+    cd ../..
+
+    # Clean up
+    rm -rf /opt/build
+
+%environment
+    export PATH=/usr/local/lammps/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+    export OMP_NUM_THREADS=1
+
+%runscript
+    echo "Container for DeePMD-kit and LAMMPS on NVIDIA arm64."
+    echo "To run LAMMPS, use: mpirun -np <nprocs> lmp -in <input_script>"
+

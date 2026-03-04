@@ -1,0 +1,83 @@
+# Apptainer definition for arm64 with DeepMD-kit (GPU) and LAMMPS
+# Base image: Ubuntu 22.04 (multiarch)
+# Installation method: Pip (DeepMD-kit 3.0+)
+
+Bootstrap: docker
+From: ubuntu:22.04
+
+%post
+    export DEBIAN_FRONTEND=noninteractive
+    
+    # Update and install basic dependencies
+    apt-get update
+    apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-dev \
+        build-essential \
+        wget \
+        git \
+        libmpich-dev \
+        lammps \
+        ca-certificates
+
+    # Update pip
+    pip3 install --upgrade pip
+    
+    # Install DeepMD-kit with GPU, LAMMPS plugin, and CUDA 12 support
+    pip3 install "deepmd-kit[gpu,cu12,lmp]"
+
+    # Clean up
+    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+%environment
+    export LC_ALL=C.UTF-8
+    export PATH=/usr/local/bin:/usr/bin:$PATH
+    
+    # Detect site-packages and set LAMMPS_PLUGIN_PATH
+    # We use a subshell to avoid persistent env mess during build if needed
+    export SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
+    export LAMMPS_PLUGIN_PATH=$SITE_PACKAGES/deepmd/lib:$LAMMPS_PLUGIN_PATH
+    
+    # GPU Support
+    export NVIDIA_VISIBLE_DEVICES=all
+    export NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+%runscript
+    echo "--- Ubuntu Container Info ---"
+    echo "OS: $(cat /etc/os-release | grep PRETTY_NAME)"
+    echo "Arch: $(uname -m)"
+    echo "----------------------------"
+    
+    python3 --version
+    dp --version
+    
+    echo "Verifying LAMMPS DeepMD plugin availability..."
+    SITE_PACKAGES=$(python3 -c "import site; print(site.getsitepackages()[0])")
+    if [ -d "$SITE_PACKAGES/deepmd/lib" ]; then
+        echo "Found DeepMD LAMMPS plugin at: $SITE_PACKAGES/deepmd/lib"
+    else
+        echo "Warning: DeepMD LAMMPS plugin directory not found in $SITE_PACKAGES/deepmd/lib"
+    fi
+    
+    lmp -h | head -n 1
+
+%labels
+    Author Marco
+    Version 1.0
+    Description Ubuntu arm64 Apptainer with DeepMD-kit 3.0 (Pip, GPU) & LAMMPS
+    Arch aarch64
+
+%help
+    This container provides an Ubuntu 22.04 environment for arm64 (aarch64)
+    with DeepMD-kit 3.0+, LAMMPS, and GPU support (via CUDA 12).
+
+    BUILDING (on x86_64 host):
+    1. Ensure QEMU is set up:
+       docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+    2. Build the image:
+       apptainer build --arch arm64 deepmd_ubuntu_arm64.sif Apptainer_ubuntu.def
+
+    RUNNING (with GPU support):
+       apptainer run --nv deepmd_ubuntu_arm64.sif

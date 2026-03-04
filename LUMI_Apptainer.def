@@ -1,0 +1,80 @@
+Bootstrap: docker
+From: luisfcollado/lumi-pytorch-rocm:5.7-torch-2.1-rocm-5.7-python-3.10-20240118
+
+%post
+    # This definition file builds a Singularity container for LUMI
+    # It is based on an image that already contains ROCm and PyTorch.
+    # Check for the latest available image for LUMI.
+
+    # Stop on errors
+    set -e
+
+    # Update and install dependencies
+    apt-get update && apt-get install -y \
+        build-essential \
+        cmake \
+        git \
+        clang
+
+    # Set LUMI compiler wrappers
+    export CC=cc
+    export CXX=CC
+
+    # Create a directory for source code
+    mkdir -p /opt/build
+    cd /opt/build
+
+    # Install DeePMD-kit
+    # The base image already has tensorflow-rocm
+    git clone --recursive https://github.com/deepmodeling/deepmd-kit.git
+    cd deepmd-kit
+    pip install -r requirements.txt
+    mkdir build && cd build
+    # Assuming ROCm is in /opt/rocm inside the container
+    cmake -DUSE_ROCM_TOOLKIT=ON -DROCM_ROOT=/opt/rocm -DCMAKE_C_COMPILER=cc -DCMAKE_CXX_COMPILER=CC ..
+    make -j$(nproc)
+    make install
+    cd ../..
+
+    # Install PLUMED
+    git clone https://github.com/plumed/plumed2.git
+    cd plumed2
+    ./configure --prefix=/usr/local/plumed
+    make -j$(nproc)
+    make install
+    cd ..
+    
+    # Install LAMMPS
+    git clone -b stable_2Aug2023_update3 https://github.com/lammps/lammps.git
+    cd lammps
+    mkdir build && cd build
+    cmake \
+        -DCMAKE_C_COMPILER=cc \
+        -DCMAKE_CXX_COMPILER=CC \
+        -D CMAKE_INSTALL_PREFIX=/usr/local/lammps \
+        -D BUILD_SHARED_LIBS=on \
+        -D PKG_KOKKOS=on \
+        -D Kokkos_ENABLE_ROCM=on \
+        -D Kokkos_ARCH_AMD_GFX90A=on \
+        -D PKG_ML-IAP=on \
+        -D MLIAP_PACKAGE_DEEPMD=on \
+        -D PKG_PLUMED=on \
+        -D PLUMED_ROOT=/usr/local/plumed \
+        ..
+    make -j$(nproc)
+    make install
+    cd ../..
+
+    # Clean up
+    rm -rf /opt/build
+
+%environment
+    export PATH=/usr/local/lammps/bin:/usr/local/plumed/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/plumed/lib:$LD_LIBRARY_PATH
+    export OMP_NUM_THREADS=1
+
+%runscript
+    echo "Container for DeePMD-kit and LAMMPS on LUMI."
+    echo "To run this container on LUMI, you should use something like:"
+    echo "singularity exec --rocm <container_image> mpirun -np <nprocs> lmp -in <input_script>"
+

@@ -1,0 +1,74 @@
+Bootstrap: docker
+From: rocm/rocm-dev-ubuntu-22.04:5.7.1-devel
+
+%post
+    # This definition file builds a Singularity container with DeePMD-kit and LAMMPS
+    # optimized for AMD GPUs with ROCm.
+    # For LUMI, it's recommended to use the base images provided by LUMI,
+    # e.g., /appl/local/laifs/containers/lumi-multitorch-rocm-*,
+    # and build the container on a local machine before transferring it to LUMI.
+
+    # Stop on errors
+    set -e
+
+    # Update and install dependencies
+    apt-get update && apt-get install -y 
+        build-essential 
+        cmake 
+        git 
+        python3 
+        python3-pip 
+        wget 
+        clang
+
+    # Set Clang as the default compiler
+    export CC=/usr/bin/clang
+    export CXX=/usr/bin/clang++
+
+    # Create a directory for source code
+    mkdir -p /opt/build
+    cd /opt/build
+
+    # Install DeePMD-kit
+    git clone --recursive https://github.com/deepmodeling/deepmd-kit.git
+    cd deepmd-kit
+    pip install -r requirements.txt
+    # Use tensorflow-rocm
+    pip install tensorflow-rocm
+    mkdir build && cd build
+    cmake -DUSE_ROCM_TOOLKIT=ON -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ ..
+    make -j$(nproc)
+    make install
+    cd ../..
+    
+    # Install LAMMPS
+    git clone -b stable_2Aug2023_update3 https://github.com/lammps/lammps.git
+    cd lammps
+    mkdir build && cd build
+    cmake 
+        -DCMAKE_C_COMPILER=/usr/bin/clang 
+        -DCMAKE_CXX_COMPILER=/usr/bin/clang++ 
+        -D CMAKE_INSTALL_PREFIX=/usr/local/lammps 
+        -D BUILD_SHARED_LIBS=on 
+        -D PKG_KOKKOS=on 
+        -D Kokkos_ENABLE_ROCM=on 
+        -D Kokkos_ARCH_AMD_GFX90A=on 
+        -D PKG_ML-IAP=on 
+        -D MLIAP_PACKAGE_DEEPMD=on 
+        ..
+    make -j$(nproc)
+    make install
+    cd ../..
+
+    # Clean up
+    rm -rf /opt/build
+
+%environment
+    export PATH=/usr/local/lammps/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+    export OMP_NUM_THREADS=1
+
+%runscript
+    echo "Container for DeePMD-kit and LAMMPS on ROCm."
+    echo "To run LAMMPS, use: mpirun -np <nprocs> lmp -in <input_script>"
+

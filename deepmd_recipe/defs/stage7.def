@@ -1,0 +1,84 @@
+Bootstrap: localimage
+From: stage6.sif
+
+%post
+
+rm -d /opt/cray
+rm -d /opt/AMD
+rm -d /opt/modulefiles
+rm -d /etc/cray
+rm -d /etc/cray-pe.d
+rm -d /pfs
+rm -d /scratch
+rm -d /projappl
+rm -d /project
+rm -d /flash
+rm -d /appl
+
+rm /etc/bash.bashrc.local
+rm /usr/lib64/pkgconfig/cray-xpmem.pc
+rm /usr/lib64/libxpmem.so.0.0.0
+rm /usr/lib64/libxpmem.so.0
+rm /usr/lib64/libxpmem.so
+rm /usr/lib64/libcxi.so.1.5.0
+rm /usr/lib64/libcxi.so.1
+rm /version.conf
+
+cat > /opt/container.d/20_init_user_environment.sh << EOF1
+#!/bin/sh
+
+module load lammps
+
+EOF1
+
+cat > /opt/container.d/30_setup_miopen_cache.sh << EOF2
+#!/bin/sh
+
+if [[ $HOSTNAME = nid* ]]; then
+  export MIOPEN_USER_DB_PATH="/tmp/$(whoami)-miopen-cache-$SLURM_NODEID"
+  export MIOPEN_CUSTOM_CACHE_DIR=$MIOPEN_USER_DB_PATH
+
+  if [ $SLURM_LOCALID -eq 0 ] ; then
+    rm -rf $MIOPEN_USER_DB_PATH
+    mkdir -p $MIOPEN_USER_DB_PATH
+  fi
+fi
+
+EOF2
+
+%help
+
+ This container provides the following packages:
+  - LAMMPS (Large-scale Atomic/Molecular Massively Parallel Simulator)
+  - DeePMD-kit
+  - PLUMED
+
+%apprun lammps
+exec lmp "$@"
+
+%apphelp lammps
+ Run the LAMMPS executable. The general syntax is:
+   $ singularity run --app lammps $SIF LAMMPS-ARGS
+%appenv lammps
+source /.container.bashrc &> /dev/null
+module load lammps
+
+%apprun deepmd
+exec dp "$@"
+
+%apphelp deepmd
+ Run the DeePMD-kit executable. The general syntax is:
+   $ singularity run --app deepmd $SIF DEEPMD-ARGS
+%appenv deepmd
+source /.container.bashrc &> /dev/null
+module load deepmd
+
+%apprun plumed
+exec plumed "$@"
+
+%apphelp plumed
+ Run the PLUMED executable. The general syntax is:
+   $ singularity run --app plumed $SIF PLUMED-ARGS
+%appenv plumed
+source /.container.bashrc &> /dev/null
+module load plumed

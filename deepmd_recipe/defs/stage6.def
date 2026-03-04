@@ -1,0 +1,55 @@
+Bootstrap: localimage
+From: stage5.sif
+
+%post
+
+source /version.conf
+DEEPMD_INSTALL_DIR=/opt/deepmd
+LAMMPS_INSTALL_DIR=/opt/lammps
+
+mkdir -p $DEEPMD_INSTALL_DIR
+
+source /.init-module-build.sh
+
+module load CrayEnv
+module load PrgEnv-gnu craype-network-none buildtools
+module load libfabric
+module load rocm/6.3.4-container
+module load tensorflow
+module load plumed
+module load lammps
+
+module rm cray-libsci
+
+# Install DeePMD-kit
+export HIPCC_COMPILE_FLAGS_APPEND="-std=c++17 -isystem ${CRAY_MPICH_PREFIX}/include "
+export HIPCC_LINK_FLAGS_APPEND="-fuse-ld=bfd -Wl,--no-keep-memory -L${CRAY_MPICH_PREFIX}/lib -lmpi ${PE_MPICH_GTL_DIR_amd_gfx90a} ${PE_MPICH_GTL_LIBS_amd_gfx90a} "
+
+git clone --recursive -b v$DEEPMD_VERSION https://github.com/deepmodeling/deepmd-kit.git
+cd deepmd-kit
+pip install -r requirements.txt
+mkdir build && cd build
+cmake -DUSE_ROCM_TOOLKIT=ON -DROCM_ROOT=/opt/rocm-$ROCM_RELEASE -DCMAKE_C_COMPILER=cc -DCMAKE_CXX_COMPILER=hipcc -DLAMMPS_ROOT=$LAMMPS_INSTALL_DIR ../source
+make -j$(nproc)
+make install
+cd /
+rm -rf deepmd-kit
+
+mkdir -p /opt/container_modules/deepmd
+
+cat >/opt/container_modules/deepmd/$DEEPMD_VERSION.lua <<EOF1
+local root="$DEEPMD_INSTALL_DIR"
+
+if not isloaded("tensorflow") then
+  load("tensorflow")
+end
+
+if not isloaded("lammps") then
+  load("lammps")
+end
+
+prepend_path("PATH", pathJoin(root, "bin"))
+prepend_path("LD_LIBRARY_PATH", pathJoin(root, "lib"))
+prepend_path("PYTHONPATH", pathJoin(root, "lib/python$PYTHON_VERSION/site-packages"))
+
+EOF1

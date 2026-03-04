@@ -1,0 +1,42 @@
+Bootstrap: localimage
+From: stage3.sif
+
+%post
+
+source /version.conf
+
+PLUMED_INSTALL_DIR=/opt/plumed
+
+mkdir -p $PLUMED_INSTALL_DIR
+
+source /.init-module-build.sh
+
+module load CrayEnv
+module load PrgEnv-gnu craype-network-none buildtools
+module load libfabric
+module load rocm/6.3.4-container
+module load pytorch
+
+module rm cray-libsci
+
+# Install PLUMED
+
+export HIPCC_COMPILE_FLAGS_APPEND="-std=c++17 -isystem ${CRAY_MPICH_PREFIX}/include "
+export HIPCC_LINK_FLAGS_APPEND="-fuse-ld=bfd -Wl,--no-keep-memory -L${CRAY_MPICH_PREFIX}/lib -lmpi ${PE_MPICH_GTL_DIR_amd_gfx90a} ${PE_MPICH_GTL_LIBS_amd_gfx90a} "
+
+curl -LO https://github.com/plumed/plumed2/archive/refs/tags/v$PLUMED_VERSION.tar.gz
+tar xf v$PLUMED_VERSION.tar.gz
+cd plumed2-$PLUMED_VERSION
+./configure --prefix=$PLUMED_INSTALL_DIR CXX=hipcc CC=cc
+make -j$(nproc)
+make install
+cd /
+rm -rf plumed2-$PLUMED_VERSION v$PLUMED_VERSION.tar.gz
+
+mkdir -p /opt/container_modules/plumed
+
+cat >/opt/container_modules/plumed/$PLUMED_VERSION.lua <<EOF1
+local root="$PLUMED_INSTALL_DIR"
+prepend_path("PATH", pathJoin(root, "bin"))
+prepend_path("LD_LIBRARY_PATH", pathJoin(root, "lib"))
+EOF1

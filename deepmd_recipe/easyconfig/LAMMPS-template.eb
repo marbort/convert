@@ -1,0 +1,94 @@
+# Created for LUMI by Orian Louant
+easyblock = 'MakeCp'
+
+name          = 'LAMMPS'
+version       = '_CONF_LAMMPS_VERSION_'
+versionsuffix = '_CONF_SUFFIX_'
+
+local_sif = 'lumi-lammps-%(version)s%(versionsuffix)s.sif'
+
+homepage = 'https://www.lammps.org/'
+
+whatis = [
+    'Description: LAMMPS with DeePMD, PLUMED and TensorFlow support',
+    'Keywords: LAMMPS, DeePMD, PLUMED, TensorFlow'
+]
+
+description = """
+This module provides a container with LAMMPS %(version)s compiled
+with DeePMD and PLUMED support.
+
+The module defines a number of environment variables:
+*   SIF and SIFLAMMPS: The full path and name of the Singularity SIF file 
+    to use with singularity exec etc.
+*   SINGULAIRTY_BINDPATH: Mounts the necessary directories from the system,
+    including /users, /project, /scratch and /flash so that you should be
+    able to use your regular directories in the container.
+"""
+
+usage = """
+Wrapper scripts are provided to make the use of this container easier. The goal of
+these wrappers is to make the execution of the application like if they were not in
+a container. The following wrappers are available: lmp, dp, plumed, tensorflow, python-container and pip-container.
+"""
+
+local_runscript_content = """
+#!/bin/bash
+
+cmd=$(basename $0)
+singularity_run="singularity run --app ${cmd} $SIF"
+exec ${singularity_run} "$@"
+
+"""
+
+local_singularity_wrapped = [
+    'lmp', 'dp', 'plumed', 'tensorflow', 'python-container', 'pip-container'
+]
+
+toolchain = SYSTEM
+
+sources = [
+    {
+        'filename':    local_sif,
+        'extract_cmd': '/bin/cp -L %s .'
+    },
+]
+
+skipsteps = ['build']
+
+files_to_copy = [
+    ([local_sif], '.'),
+]
+
+sanity_check_paths = {
+    'files': [f'bin/{file}' for file in local_singularity_wrapped],
+    'dirs':  [],
+}
+
+modextravars = {
+  'SINGULARITY_BIND': '/opt/cray,/opt/AMD,/opt/modulefiles,' +
+                      '/etc/cray,/etc/cray-pe.d,/etc/bash.bashrc.local,' +
+                      '/usr/lib64/pkgconfig/cray-xpmem.pc,' +
+                      '/usr/lib64/libxpmem.so,/usr/lib64/libxpmem.so.0,' +
+                      '/usr/lib64/libxpmem.so.0.0.0,' + 
+                      '/usr/lib64/libcxi.so.1.5.0,/usr/lib64/libcxi.so.1,' +
+                      '/var/spool/slurmd,' +
+                      '/pfs,/scratch,/projappl,/project,/flash,/appl,/users'
+}
+
+postinstallcmds = [
+    'mkdir -p %(installdir)s/bin',
+    'cd %(installdir)s/bin ; cat >runscript <<EOF' + local_runscript_content.replace('$', '\$') + '
+EOF
+',
+    'cd %(installdir)s/bin ; chmod a+rx runscript',
+    'cd %(installdir)s/bin ; chmod a+rx runscript',
+    'cd %(installdir)s/bin ; for wrapped in ' + ' '.join(local_singularity_wrapped) + '; do ln -s runscript $wrapped; done'
+]
+
+modluafooter = f"""
+-- Call a routine to set the various environment variables.
+create_container_vars( '{local_sif}', 'LAMMPS', '%(installdir)s' )
+"""
+
+moduleclass = 'chem'

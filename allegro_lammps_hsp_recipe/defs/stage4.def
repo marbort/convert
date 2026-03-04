@@ -1,0 +1,208 @@
+Bootstrap: localimage
+From: stage3.sif
+
+%post
+
+source /version.conf
+
+LAMMPS_INSTALL_DIR=/opt/lammps
+PLUMED_INSTALL_DIR=/opt/plumed
+
+mkdir -p $LAMMPS_INSTALL_DIR
+mkdir -p $PLUMED_INSTALL_DIR
+
+source /.init-module-build.sh
+
+module load CrayEnv
+module load PrgEnv-gnu craype-network-none buildtools
+module load libfabric
+module load rocm/6.3.4
+module load pytorch
+
+module rm cray-libsci
+
+export PYTHONPATH="$LAMMPS_INSTALL_DIR/lib/python$PYTHON_VERSION/site-packages:$PYTHONPATH"
+export PYTHONPATH="$LAMMPS_INSTALL_DIR/lib64/python$PYTHON_VERSION/site-packages:$PYTHONPATH"
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR packaging==$PACKAGING_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR setuptools==$SETUPTOOLS_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR setuptools-scm==$SETUPTOOLS_SCM_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR wheel==$WHEEL_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR matscipy==$MATSCIPY_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR vesin==$VESIN_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR openequivariance==$OPENEQUIVARIANCE_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR Cython==$CYTHON_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR uv==$UV_VERSION
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR uv-build==$UV_VERSION
+
+export PATH="$LAMMPS_INSTALL_DIR/bin:$PATH"
+
+curl -LO https://github.com/mir-group/nequip/archive/$NEQUIP_COMMIT.tar.gz
+tar xf $NEQUIP_COMMIT.tar.gz
+cd nequip-*
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR .
+cd ../ && rm -rf $NEQUIP_COMMIT.tar.gz nequip-*
+
+curl -LO https://github.com/mir-group/allegro/archive/refs/tags/$ALLEGRO_COMMIT.tar.gz
+tar xf $ALLEGRO_COMMIT.tar.gz
+cd allegro-*
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR .
+cd ../ && rm -rf $ALLEGRO_COMMIT.tar.gz allegro-*
+
+curl -LO github.com/TorchSim/torch-sim/archive/refs/tags/$TORCH_SIM_VERSION.tar.gz
+tar xf $TORCH_SIM_VERSION.tar.gz
+cd torch-sim-*
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR .
+cd ../ && rm -rf $TORCH_SIM_VERSION.tar.gz torch-sim-*
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hyobj.git@$HYOBJ_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hylleraas-interfaces.git@$HYIF_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hyrun.git@$HYRUN_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hyset.git@$HYSET_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hyal.git@$HYAL_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hydb.git@$HYDB_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hylleraas-tools.git@$HYTOOLS_COMMIT
+
+CC=cc CXX=CC pip install --no-build-isolation --prefix $LAMMPS_INSTALL_DIR git+https://gitlab.com/hylleraasplatform/hycg.git@$HYCG_COMMIT
+
+module load craype-network-ofi
+
+curl -LO https://download.pytorch.org/libtorch/rocm6.3/libtorch-shared-with-deps-$LIBTORCH_VERSION.zip
+unzip libtorch-shared-with-deps-*.zip
+
+pushd libtorch/lib
+
+for libwithhash in $(ls *-*.so*); do 
+  for lib in *.so; do 
+    patchelf --replace-needed $libwithhash $(s=$libwithhash; echo ${s%-*}.so${s#*.so*}) $lib
+  done
+done
+
+pwd
+
+rm -rf *-*.so*
+
+filetocopy=(libtorch.so libtorch_cpu.so libc10.so libc10_hip.so libtorch_hip.so
+libmagma.so libgomp.so libcaffe2_nvrtc.so libaotriton_v2.so.0.11.0)
+
+mkdir -p $LAMMPS_INSTALL_DIR/libtorch
+
+for lib in ${filetocopy[@]}; do 
+  cp $lib $LAMMPS_INSTALL_DIR/libtorch/$lib
+done
+
+popd
+
+sed -i 's/hip::hipfft;//' /libtorch/share/cmake/Caffe2/Caffe2Targets.cmake
+
+curl -LO https://github.com/plumed/plumed2/archive/refs/tags/v$PLUMED_VERSION.tar.gz
+tar xf v$PLUMED_VERSION.tar.gz
+
+curl -LO https://github.com/lammps/lammps/archive/refs/tags/$LAMMPS_VERSION.tar.gz
+tar xf $LAMMPS_VERSION.tar.gz
+
+curl -LO https://github.com/mir-group/pair_nequip_allegro/archive/$PAIR_ALLEGRO_COMMIT.tar.gz
+tar xf $PAIR_ALLEGRO_COMMIT.tar.gz
+
+cd pair_nequip_allegro-*
+./patch_lammps.sh ../lammps-$LAMMPS_VERSION/
+
+export PKG_CONFIG_PATH="$PLUMED_INSTALL/pkgconfig:$PKG_CONFIG_PATH"
+export HIPCC_COMPILE_FLAGS_APPEND="-std=c++17 -isystem ${CRAY_MPICH_PREFIX}/include "
+export HIPCC_LINK_FLAGS_APPEND="-fuse-ld=bfd -Wl,--no-keep-memory -L${CRAY_MPICH_PREFIX}/lib -lmpi ${PE_MPICH_GTL_DIR_amd_gfx90a} ${PE_MPICH_GTL_LIBS_amd_gfx90a} "
+
+export CMAKE_PREFIX_PATH=/libtorch/share/cmake:$ROCM_PATH/lib/cmake
+
+cd ../plumed2-$PLUMED_VERSION
+./configure --enable-modules=all CXX=hipcc CC=cc  CXXFLAGS=-O3 --disable-python --prefix=$PLUMED_INSTALL
+make install -j ${SINGULARITY_MKSQUASHFS_PROCS}
+
+mkdir $PLUMED_INSTALL/pkgconfig
+echo " 
+
+prefix= $PLUMED_INSTALL
+exec_prefix=\${prefix}
+libdir=\${exec_prefix}/lib
+includedir=\${prefix}/include
+
+Name: plumed
+Description: plumed
+Version: $PLUMED_VERSION
+Libs: -L\${libdir}  
+Cflags: -I\${includedir}
+" > $PLUMED_INSTALL/pkgconfig/plumed.pc
+
+cd ../lammps-$LAMMPS_VERSION
+
+# patch implicit conversion - val() should be 0.0 anyway
+sed -i 's/val(0.0F)/val()/g' lib/kokkos/core/src/impl/Kokkos_Half_FloatingPointWrapper.hpp
+
+mkdir build && cd build
+
+cmake -C ../cmake/presets/basic.cmake \
+  -D CMAKE_INSTALL_PREFIX=$LAMMPS_INSTALL_DIR \
+  -D CMAKE_BUILD_TYPE=Release \
+  -D CMAKE_CXX_COMPILER=hipcc \
+  -D PKG_EXTRA-FIX=ON \
+  -D PKG_EXTRA-DUMP=ON \
+  -D PKG_MC=ON \
+  -D PKG_REPLICA=ON \
+  -D PKG_PLUMED=ON \
+  -D PKG_ML-IAP=ON \
+  -D PKG_ML-SNAP=ON \
+  -D MLIAP_ENABLE_PYTHON=ON \
+  -D PKG_PYTHON=ON \
+  -D BUILD_SHARED_LIBS=ON \
+  -D Cythonize_EXECUTABLE=$LAMMPS_INSTALL_DIR/bin/cythonize \
+  -D Python_EXECUTABLE=/usr/bin/python \
+  -D DOWNLOAD_PLUMED=NO \
+  -D PLUMED_MODE=runtime \
+  -D NEQUIP_AOT_COMPILE=ON \
+  -D PKG_KOKKOS=ON \
+  -D BUILD_MPI=ON \
+  -D BUILD_OMP=ON \
+  -D Kokkos_ARCH_ZEN3=ON \
+  -D Kokkos_ARCH_VEGA90A=ON \
+  -D Kokkos_ENABLE_SERIAL=ON \
+  -D Kokkos_ENABLE_HIP=ON \
+  -D Kokkos_ENABLE_OPENMP=ON \
+  -D HIP_PATH=/opt/rocm \
+  -D CMAKE_TUNE_FLAGS="-munsafe-fp-atomics" \
+  -D CMAKE_INSTALL_RPATH='$ORIGIN/../libtorch' \
+  -D MKL_INCLUDE_DIR=/opt/pytorch/include \
+  ../cmake
+
+make install -j ${SINGULARITY_MKSQUASHFS_PROCS}
+make install-python
+
+cd / 
+
+rm -rf plumed2-$PLUMED_VERSION v$PLUMED_VERSION.tar.gz
+rm -rf libtorch lammps-$LAMMPS_VERSION $LAMMPS_VERSION.tar.gz
+rm -rf pair_nequip_allegro-* $PAIR_ALLEGRO_COMMIT.tar.gz
+rm -rf libtorch-shared-with-deps-*.zip target.lst
+
+mkdir -p /opt/container_modules/lammps-pair-allegro/
+
+cat >/opt/container_modules/lammps-pair-allegro/$LAMMPS_VERSION.lua <<EOF1
+local root="$LAMMPS_INSTALL_DIR"
+
+if not isloaded("pytorch") then
+  load("pytorch")
+end
+
+prepend_path("PATH", pathJoin(root, "bin"))
+
+prepend_path("LD_LIBRARY_PATH", pathJoin(root, "lib"))
+prepend_path("LD_LIBRARY_PATH", pathJoin(root, "lib64"))
+
+prepend_path("PYTHONPATH", pathJoin(root, "lib/python$PYTHON_VERSION/site-packages"))
+prepend_path("PYTHONPATH", pathJoin(root, "lib64/python$PYTHON_VERSION/site-packages"))
+
+EOF1

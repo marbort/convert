@@ -1,0 +1,111 @@
+# Created for LUMI by Orian Louant
+easyblock = 'MakeCp'
+
+name          = 'LAMMPS'
+version       = '_CONF_LAMMPS_VERSION_'
+versionsuffix = '_CONF_SUFFIX_'
+
+local_sif = 'lumi-lammps-%(version)s%(versionsuffix)s.sif'
+
+homepage = 'https://www.lammps.org/'
+
+whatis = [
+    'Description: LAMMPS with pair-allegro support',
+    'Keywords: LAMMPS, NequIP, Allegro, pair-allegro'
+]
+
+description = """
+This module provides a container with LAMMPS %(version)s compiled
+with the pair allegro patch.
+
+The module defines a number of environment variables:
+*   SIF and SIFLAMMPS: The full path and name of the Singularity SIF file 
+    to use with singularity exec etc.
+*   SINGULAIRTY_BINDPATH: Mounts the necessary directories from the system,
+    including /users, /project, /scratch and /flash so that you should be
+    able to use your regular directories in the container.
+"""
+
+usage = """
+Wrapper scripts are provided to make the use of this container easier. The goal of
+these wrappers is to make the execution of the application like if they were not in
+a container. The following wrappers are available: ase, nequip-train, nequip-benchmark,
+nequip-evaluate, nequip-deploy, lmp, python-container and pip-container.
+"""
+
+local_runscript_content = """
+#!/bin/bash
+
+cmd=$(basename $0)
+if [[ $cmd == nequip* ]]; then
+    # Handle all nequip commands
+    # The app name is 'nequip'
+    # The command to run inside is whatever follows 'nequip-'
+    singularity_run="singularity run --app nequip $SIF ${cmd#nequip-}"
+
+elif [[ $cmd == lmp* ]]; then
+    # Handle all lammps commands
+    # The app name is 'lammps'
+    singularity_run="singularity run --app lammps $SIF"
+else
+    # Fallback for any other commands (like ase, python and pip)
+    # This tries to guess the app name by removing a suffix like '-container'
+    app_name=${cmd%-*}
+    singularity_run="singularity run --app ${app_name} $SIF"
+fi
+
+exec ${singularity_run} "$@"
+
+"""
+
+local_singularity_wrapped = [
+    'ase', 'lmp', 'nequip-package', 'nequip-compile', 
+    'nequip-train', 'python-container', 'pip-container',
+    'nequip-prepare-lmp-mliap'
+]
+
+toolchain = SYSTEM
+
+sources = [
+    {
+        'filename':    local_sif,
+        'extract_cmd': '/bin/cp -L %s .'
+    },
+]
+
+skipsteps = ['build']
+
+files_to_copy = [
+    ([local_sif], '.'),
+]
+
+sanity_check_paths = {
+    'files': [f'bin/{file}' for file in local_singularity_wrapped],
+    'dirs':  [],
+}
+
+modextravars = {
+  'SINGULARITY_BIND': '/opt/cray,/opt/AMD,/opt/modulefiles,' +
+                      '/etc/cray,/etc/cray-pe.d,/etc/bash.bashrc.local,' +
+                      '/usr/lib64/pkgconfig/cray-xpmem.pc,' +
+                      '/usr/lib64/libxpmem.so,/usr/lib64/libxpmem.so.0,' +
+                      '/usr/lib64/libxpmem.so.0.0.0,' + 
+                      '/usr/lib64/libcxi.so.1.5.0,/usr/lib64/libcxi.so.1,' +
+                      '/var/spool/slurmd,' +
+                      '/pfs,/scratch,/projappl,/project,/flash,/appl,/users'
+}
+
+postinstallcmds = [
+    'mkdir -p %(installdir)s/bin',
+    'cd %(installdir)s/bin ; cat >runscript <<EOF' + local_runscript_content.replace('$', '\$') + '\nEOF\n',
+    'cd %(installdir)s/bin ; chmod a+rx runscript',
+    'cd %(installdir)s/bin ; chmod a+rx runscript',
+    'cd %(installdir)s/bin ; for wrapped in ' + ' '.join(local_singularity_wrapped) + '; do ln -s runscript $wrapped; done'
+]
+
+modluafooter = f"""
+-- Call a routine to set the various environment variables.
+create_container_vars( '{local_sif}', 'LAMMPS', '%(installdir)s' )
+"""
+
+moduleclass = 'chem'
