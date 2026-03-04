@@ -27,11 +27,15 @@ From: nvidia/cuda:12.2.0-base-ubuntu22.04-sbsa
 
     # Download sources
     git clone --recursive https://github.com/deepmodeling/deepmd-kit.git
-    git clone -b stable_2Aug2023_update3 https://github.com/lammps/lammps.git
+
+    wget https://github.com/lammps/lammps/archive/stable_22Jul2025_update2.tar.gz
+    tar xf stable_22Jul2025_update2.tar.gz
 
     # Install LAMMPS
-    cd lammps
+    cd lammps-stable_22Jul2025_update2
     mkdir build && cd build
+    echo "include(/deepmd-kit/source/lmp/builtin.cmake)" >> ../cmake/CMakeLists.txt
+
     cmake \
           -D BUILD_MPI=yes \
           -D PKG_PLUMED=yes \
@@ -54,9 +58,8 @@ From: nvidia/cuda:12.2.0-base-ubuntu22.04-sbsa
 
     # Install DeePMD-kit
     cd deepmd-kit
-    pip install -r requirements.txt
     mkdir build && cd build
-    cmake -DUSE_CUDA_TOOLKIT=ON -DLAMMPS_SOURCE_ROOT=/opt/build/lammps ..
+    cmake -DUSE_CUDA_TOOLKIT=ON -DLAMMPS_SOURCE_ROOT=/lammps-stable_22Jul2025/ ../source
     make -j$(nproc)
     make install
     cd ../..
