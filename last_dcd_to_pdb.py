@@ -25,7 +25,8 @@ def lastdcd_to_qmmm(topo,trj,sel,check):
     #ag1.write(f"QMMM_last_{val}.dcd")
     #ag1.write(f"QMMM_last_{val}.nc")
     ag2 = u.select_atoms(sel)
-    
+    distances=mda.lib.distances.self_distance_array(ag2.positions)
+    print(f"Max distance in QMMM region: {distances.max():.3f} Å")
     atom_idx=[x.index for x in ag2]
     QMmm_residues=sorted(list(set([x.resid for x in ag2])))
     atom_elm=[x.element.upper() for x in ag2 ]
@@ -98,10 +99,24 @@ for input in inputs:
     Cl1_pos,Cl2_pos,Mg1_pos,Mg2_pos,avg,avg_Mg=get_avg_Cl(4,46,topo,input)
     Cl_avg_pos=" ".join([str(x) for x in avg])
     Mg_avg_pos=" ".join([str(x) for x in avg_Mg])
-    #sel=f"byres point {Cl_avg_pos} 8.0"
-    #sel=f"resid 4 44 or (not resname IM2 and (byres point {Cl_avg_pos} {radius} and not resid 6223))"
     check="resname IMC"
     sel=f"resname IMC or (not resname IM2 and (byres point {Mg_avg_pos} {radius} and not resid 6223))"
+    try:
+        print(sys.argv[4].lower())
+        if sys.argv[4].lower() == "old":
+            print("Using old selection")
+            Cl1_pos,Cl2_pos,Mg1_pos,Mg2_pos,avg,avg_Mg=get_avg_Cl(4,44,topo,input)
+            Cl_avg_pos=" ".join([str(x) for x in avg])
+            Mg_avg_pos=" ".join([str(x) for x in avg_Mg])
+            check="resname IM2"
+            sel=f"resid 4 44 or (not resname IM2 and (byres point {Cl_avg_pos} {radius} and not resid 6223))"
+    except:
+        pass
+        
+    #sel=f"byres point {Cl_avg_pos} 8.0"
+    #sel=f"resid 4 44 or (not resname IM2 and (byres point {Cl_avg_pos} {radius} and not resid 6223))"
+    #check="resname IMC"
+    #sel=f"resname IMC or (not resname IM2 and (byres point {Mg_avg_pos} {radius} and not resid 6223))"
     #sel=f"bynum 115 to 126 or bynum 1635 to 1646 or (not resname IM2 and (byres point {Mg_avg_pos} {radius}))"
     print(input)
     print(Cl1_pos,Cl2_pos,Cl_avg_pos)

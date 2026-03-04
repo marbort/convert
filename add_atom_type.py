@@ -71,7 +71,7 @@ def main():
     parser.add_argument('--tset', type=str, help='Training set')
     parser.add_argument('--out', type=str, help='output path for the new tset',default='.')    
     parser.add_argument('--name', type=str, help='Name of the atom type')
-    parser.add_argument('--subst', type=str, help='Old atom tye to substitute')
+    parser.add_argument('--subst', type=str, help='Old atom type to substitute')
     parser.add_argument('--fromjson', type=str, help='Take the tsets from a json file',default=None)
     parser.add_argument('--type_map', type=str, help='Type map to fix eventual inconsistencies',default=None)
     

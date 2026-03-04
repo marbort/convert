@@ -10,6 +10,13 @@ import json
 import argparse
 
 
+def is_float_try(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
 
 def calc_percent_basins(colvar,cvs,mincv1,mincv2,tol,maxcv3,width,symm_minima,temp):
     kB=8.314462618E-3 
@@ -30,19 +37,23 @@ def calc_percent_basins(colvar,cvs,mincv1,mincv2,tol,maxcv3,width,symm_minima,te
     cv2=header.index(cvs[1])
     cv3=header.index(cvs[2])
     for j,line in enumerate(lines[1000:]):
-        split=[float(x) for x in line.split()]
-        for k,basin in enumerate(basins):
-            if basin[0]-tol[k] < split[cv1] < basin[0]+tol[k] and basin[1]-tol[k] < split[cv2] < \
-                basin[1]+tol[k]:
-                bias=[split[x] for x in bias_idx]
-                bias_total=sum(bias)
-                points[basin].append((split[cv3],split[cv1],split[cv2],j))
-                if temp == 0:
-                    biases[basin].append(1)
-                else:       
-                    #weights[basin].append(-kB*temp*np.log(np.exp(bias_total/(kB*temp))))       
-                    biases[basin].append(bias_total)
-                cv_split[basin].append(line)
+        split=[float(x) for x in line.split() if is_float_try(x)]
+        if len(split) < len(header):
+            print(f"Skipping line {j+1000} due to insufficient data.")
+            continue
+        else:
+            for k,basin in enumerate(basins):
+                if basin[0]-tol[k] < split[cv1] < basin[0]+tol[k] and basin[1]-tol[k] < split[cv2] < \
+                    basin[1]+tol[k]:
+                    bias=[split[x] for x in bias_idx]
+                    bias_total=sum(bias)
+                    points[basin].append((split[cv3],split[cv1],split[cv2],j))
+                    if temp == 0:
+                        biases[basin].append(1)
+                    else:       
+                        #weights[basin].append(-kB*temp*np.log(np.exp(bias_total/(kB*temp))))       
+                        biases[basin].append(bias_total)
+                    cv_split[basin].append(line)
     for item in cv_split:
         item_name="_".join([str(x) for x in item])
         with open(f'colvar_{item_name}.dat','w') as ofile:

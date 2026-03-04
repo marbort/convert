@@ -45,32 +45,38 @@ def calculate_volume(density,MW,molecules):
     Vang=VmL*1e24
     return(Vang,(Vang)**(1/3),round(Vang**(1/3)-1,0))
 
+try:
+    if sys.argv[1] == "macro": 
+        Conc,Density,vml,mass=calculate_macroscopic(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]) \
+                        ,float(sys.argv[5]),float(sys.argv[6]))
 
-if sys.argv[1] == "macro": 
-    Conc,Density,vml,mass=calculate_macroscopic(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]) \
-                    ,float(sys.argv[5]),float(sys.argv[6]))
+        print("""
+        Concentration = {:.3f} M
+        Density = {:.3f} g/mL
+        """.format(Conc,Density))
 
-    print("""
-    Concentration= {:.3f} M
-    Density= {:.3f} g/mL
-    """.format(Conc,Density))
+    if sys.argv[1] == "nmols":
+        nmols=calculate_nmols(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]),\
+            float(sys.argv[5]),float(sys.argv[6]))
+        print(f"nmols = {nmols[0]:.0f} ")
+        print(f"V (mL) = {nmols[1]:.2e} ")
 
-if sys.argv[1] == "nmols":
-    nmols=calculate_nmols(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]),\
-        float(sys.argv[5]),float(sys.argv[6]))
-    print(f"nmols= {nmols[0]:.0f} ")
-    print(f"V (mL)= {nmols[1]:.2e} ")
+    if sys.argv[1] == "macro_mass":
+        Density,vml=calculate_macroscopic_mass(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]),\
+            float(sys.argv[5]))
+        print("density = {},{} ".format(Density,vml))
 
-if sys.argv[1] == "macro_mass":
-    Density,vml=calculate_macroscopic_mass(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]),\
-        float(sys.argv[5]))
-    print("density= {},{} ".format(Density,vml))
-
-if sys.argv[1] == "volume":
-    vml,side,packside=calculate_volume(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]))
-    print("=========================================")
-    print(f"Density (g/mL)= {sys.argv[2]} MW= {sys.argv[3]} Molecules= {sys.argv[4]}")
-    print(f"Volume (Å^3)= {vml:.4f}")
-    print(f"Side (Å)= {side:.2f}")
-    print(f"packmol Side (Å)= {packside:.2f}")
-    print("=========================================")
+    if sys.argv[1] == "volume":
+        vml,side,packside=calculate_volume(float(sys.argv[2]),float(sys.argv[3]),float(sys.argv[4]))
+        print("=========================================")
+        print(f"Density (g/mL) = {sys.argv[2]} MW= {sys.argv[3]} Molecules= {sys.argv[4]}")
+        print(f"Volume (Å^3) = {vml:.4f}")
+        print(f"Side (Å) = {side:.2f}")
+        print(f"packmol Side (Å) = {packside:.2f}")
+        print("=========================================")
+except:
+    print("Usage:")
+    print("calc_macro.py macro <nmolecules> <boxx> <boxy> <boxz> <MW>")
+    print("calc_macro.py nmols <boxx> <boxy> <boxz> <density> <MW>")
+    print("calc_macro.py macro_mass <mass> <boxx> <boxy> <boxz>")
+    print("calc_macro.py volume <density> <MW> <molecules>")

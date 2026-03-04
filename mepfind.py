@@ -51,9 +51,8 @@ def plot2d(x,y,maxz,value,file,labx,laby,cmap,min_path):
     plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
   
     
-    plt.xlabel(labx)
-    plt.ylabel(laby)
-    
+    plt.xlabel(r"$\mathrm{{{text}}}$".format(text=labx))
+    plt.ylabel(r"$\mathrm{{{text}}}$".format(text=laby))
     
     cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+20,20))
     #cbar.ax.set_ylim(0,MAX)
@@ -67,6 +66,46 @@ def plot2d(x,y,maxz,value,file,labx,laby,cmap,min_path):
     plt.tight_layout()
     plt.savefig('{}_minpath.png'.format(file),format='png')
 
+def plot2d_MEPSAnd(x,y,maxz,value,file,labx,laby,cmap,min_path):
+    fig=plt.figure(figsize=(16,12),dpi=150)
+    font = {'family' : 'Formular',
+        'weight' : 'normal',
+        'size'   : 46}
+    mpl.rc('font', **font)
+    mpl.rcParams['axes.linewidth'] = 3
+    mpl.rcParams['lines.linewidth'] = 3
+    #lev=int(round(np.max(np.ma.masked_invalid(value))/10,0))
+    MAX=int(maxz)
+    
+    
+    lev=range(0,MAX+5,5)
+    
+    value[value>MAX]=MAX+10
+    CLines=plt.contour(x, y,value,levels=range(0,MAX,20),vmin=0,vmax=MAX,linewidths=1.5,colors='black')
+    
+    print(max(x),max(y))
+    tix=np.linspace(0,max(x),round(max(x)/0.5)+1)
+    tiy=np.linspace(0,max(y),round(max(y)/0.5)+1)
+    print(tix)
+   
+    plt.contourf(x, y,value,lev,vmin=0,vmax=MAX,cmap=cmap)
+  
+    
+    plt.xlabel(r"$\mathrm{{{text}}}$".format(text=labx))
+    plt.ylabel(r"$\mathrm{{{text}}}$".format(text=laby))
+    
+    cbar=plt.colorbar(label="$\Delta A\ (kJ\ mol^{-1})$",ticks=range(0,MAX+20,20))
+    #cbar.ax.set_ylim(0,MAX)
+    
+    
+    
+    
+    plt.scatter(min_path[1],min_path[2],color='white',s=45)
+    plt.xlim([min(x),max(x)])
+    plt.ylim([min(y),max(y)])
+    plt.tight_layout()
+    plt.savefig('{}_minpath_MEPSAnd.png'.format(file),format='png')
+
 parser = argparse.ArgumentParser(description='Plot data')
 parser.add_argument('--input', dest='input', 
                     type=str, help='input data')
@@ -78,6 +117,8 @@ parser.add_argument('--labels', dest='labels', default=None, type=str, nargs='+'
                         help='Plot labels label')
 parser.add_argument('--xlab', dest='xlab', type=str, 
                         help='X axis label',default='CV1')
+parser.add_argument('--ylab', dest='ylab', type=str, 
+                        help='Y axis label',default='CV2')
 parser.add_argument('--min', dest='min', 
                     type=float, help='CV value for 0')
 parser.add_argument('--limy', dest='limy', 
@@ -92,6 +133,8 @@ parser.add_argument('--p2', dest='p2',
                     help='p2 coords',nargs='+',type=str)
 parser.add_argument('--tol', dest='tol', 
                     help='tolearnce to find min around point',type=float,default=0.1)
+parser.add_argument('--MEPSAnd', dest='MEPSAnd', 
+                    help='plot MEPSAnd path also',action='store_true',default=False)
     
 args = parser.parse_args()
 
@@ -172,12 +215,17 @@ np.savetxt("path_CV2_4.dat",path_arr_np_cv2[step2:],fmt='%.4f')
 min_path=np.loadtxt('path.dat',unpack=True)
 
 
+
 MAX=args.max
 
-labx="CV1"
-laby="CV2"
+labx=args.xlab
+laby=args.ylab
 cmap_active='rainbow'
 
 plot2d(cv1,cv2,MAX,free_grid,file,labx,laby,cmap_active,min_path)
+
+if args.MEPSAnd:
+    min_path_MEPSAnd=np.loadtxt('path_MEPSAnd.dat',unpack=True)
+    plot2d_MEPSAnd(cv1,cv2,MAX,free_grid,file,labx,laby,cmap_active,min_path_MEPSAnd)
     
     

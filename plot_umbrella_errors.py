@@ -50,6 +50,18 @@ def extract_data(input, split, min, fac):
                 data["split_{}".format(i)]["free"].append(float(line.split()[1]))
         if i != 0:
             freesplit.append(data["split_{}".format(i)]["free"])
+        
+        with open(f"{input}_block_{i}", "r") as ifile:
+            lines = ifile.readlines()
+        data["block_{}".format(i)] = {"cv": [], "free": []}
+        for line in lines:
+            if "#" not in line:
+                # if 'inf' not in line:
+                data["block_{}".format(i)]["cv"].append(float(line.split()[0]) * fac)
+                data["block_{}".format(i)]["free"].append(float(line.split()[1]))
+        
+        
+        
     data["mean_free"] = [np.mean(np.ma.masked_invalid(x)) for x in zip(*freesplit)]
     if min:
         cv_min = find_nearest(data["split_0"]["cv"], min)
@@ -71,7 +83,7 @@ def extract_data(input, split, min, fac):
     ]
     # print(data['mean_free_scaled'][data['split_0']['cv'].index(cv_min)])
     # print(data["split_1"]['free'][-1],data["split_2"]['free'][-1],data["split_3"]['free'][-1],data["split_4"]['free'][-1],data['std_free'][-1],data['std_free_mean'][-1])
-    print(data["std_free"][12], data["std_free_mean"][12])
+    #print(data["std_free"][12], data["std_free_mean"][12])
     for entry in data:
         if isinstance(data[entry], dict):
             datalist[entry] = data[entry]
@@ -642,9 +654,42 @@ def plot_splits(data,labels=None):
             #plt.xlabel("CV")
             #plt.ylabel("Free Energy ($kJ\ mol^{-1}$)")
             #plt.title(i)
-    #plt.legend(ncols=5)
+    plt.legend()
     plt.tight_layout()
     plt.savefig("umbrella_fes_splits.png", format="png")
+
+def plot_convergence(data,labels=None): 
+    fig,axes = plt.subplots(figsize=(14, 16), dpi=150, nrows=len(data), ncols=1)
+    font = {"family": "sans", "weight": "normal", "size": 32}
+    mpl.rc("font", **font)
+    mpl.rcParams["axes.linewidth"] = 3
+    for k,i in enumerate(data):
+        for j in range(5):
+            ref= data[i][f"block_{j}"]["free"][-1]
+            try:
+                axes[k].plot(
+                    data[i][f"block_{j}"]["cv"],
+                    np.array(data[i][f"block_{j}"]["free"]) - ref,
+                    label=f"block_{j}",
+                )
+                axes[k].title.set_text(labels[k])
+            except:
+                axes.plot(
+                data[i][f"block_{j}"]["cv"],
+                np.array(data[i][f"block_{j}"]["free"]) - ref,
+                label=f"block_{j}",
+                )
+                axes.title.set_text(labels[k])
+        try:
+            axes[k].plot(data[i]['equil']['cv'],np.array(data[i]['equil']['free'])-data[i]['equil']['free'][-1],'k--',label='Mean FES')
+        except:
+            axes.plot(data[i]['equil']['cv'],np.array(data[i]['equil']['free'])-data[i]['equil']['free'][-1],'k--',label='Mean FES')
+            
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("umbrella_fes_blocks.png", format="png")
+    
+   
 
 
 def main():
@@ -710,6 +755,7 @@ def main():
     args = parser.parse_args()
     data = {}
     data_bootstrap = {}
+    bootstrap = True
     for i, input in enumerate(args.input):
         try:
             if len(args.split) == len(args.input) and len(args.fac) == len(args.input):
@@ -720,8 +766,11 @@ def main():
         except:
             print("Single minimum defined")
             data[input] = extract_data(input, args.split[i], args.min, args.fac[i])
-            
-        data_bootstrap[input] = np.loadtxt(f"{input}_equil_errors",unpack=True)
+        try:
+            data_bootstrap[input] = np.loadtxt(f"{input}_equil_errors",unpack=True)
+        except:
+            print("No bootstrap data found for {}".format(input))
+            bootstrap=False
 
     
     print(data[input].keys())
@@ -741,26 +790,27 @@ def main():
         args.yrange,
         args.title,
     )
-    
-    plot_data_bootstrap(
-        data_bootstrap,
-        args.min,
-        args.full,
-        args.equil,
-        args.input,
-        args.kcal,
-        args.xlabel,
-        args.ylabel,
-        args.labels,
-        args.inverted,
-        args.color,
-        args.pres,
-        args.yrange,
-        args.title,
-        args.fac
+    if bootstrap:
+        plot_data_bootstrap(
+            data_bootstrap,
+            args.min,
+            args.full,
+            args.equil,
+            args.input,
+            args.kcal,
+            args.xlabel,
+            args.ylabel,
+            args.labels,
+            args.inverted,
+            args.color,
+            args.pres,
+            args.yrange,
+            args.title,
+            args.fac
     )
     
     plot_splits(data,args.labels)
+    plot_convergence(data,args.labels)
 
     # print(len(data['free']),len(data['err']))
 

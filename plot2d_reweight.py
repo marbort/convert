@@ -226,7 +226,7 @@ def dim_red_state(cv1, cv2, free_grid, temp):
     return (reduced_fes_1, reduced_fes_2)
 
 
-def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
+def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm, limy,ticx,ticy):
     fig = plt.figure(figsize=(16, 12), dpi=150)
     font = {"family": "Formular", "weight": "normal", "size": 46}
     mpl.rc("font", **font)
@@ -262,14 +262,23 @@ def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
         min_ax=min(x)
     """
     print(max(x), max(y))
-    tix = np.linspace(0, round(max(x)), round(round(max(x)) / 0.5) + 1)
-    tiy = np.linspace(0, round(max(y)), round(round(max(y)) / 0.5) + 1)
+    if ticx:
+        tix = np.arange(round(min(x)),  round(max(x)) + ticx, ticx)
+    else:
+        tix = np.linspace(round(min(x)), round(max(x)), round(round(max(x)) / 1) + 1)
+    if ticy:
+        tiy = np.arange(round(min(y)),  round(max(y)) + ticy, ticy)
+    else:
+        tiy = np.linspace(round(min(y)), round(max(y)), round(round(max(y)) / 1) + 1)
     print(tix,tiy,max(x), max(y))
     # plt.clabel(CLines,levels=range(0,MAX,20), inline=True, fontsize=16,colors='black')
-    print(f"Plotting {file} with xlim {plt.xlim()} and ylim {plt.ylim()}")
+   
     plt.contourf(x, y, value, lev, vmin=0, vmax=MAX, cmap=cmap)
     plt.xticks(tix, labels=[str(round(x, 1)) for x in tix])
     plt.yticks(tiy)
+    if limy:
+        plt.ylim([0, limy])
+    
 
     ###
 
@@ -278,8 +287,10 @@ def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
     # val_kcal=[x/4.184 for x in value]
     # plt.contourf(x, y,val_kcal,lev,vmin=0,vmax=10,cmap=cmap)
 
-    plt.xlabel(labx)
-    plt.ylabel(laby)
+
+    plt.xlabel(r"$\mathrm{{{text}}}$".format(text=labx))
+    plt.ylabel(r"$\mathrm{{{text}}}$".format(text=laby))
+    
     # plt.xticks(np.arange(0,max(x),0.5))
     # bounds=[1,2,3,4]
     # cbarkcal
@@ -330,7 +341,11 @@ def plot2d(x, y, maxz, value, file, labx, laby, cmap, minima, min_pt, symm):
     # circle2=plt.Circle(xy=(1.85,1.85), radius=0.15, color='r',fill=False )
     # ax.add_patch(circle1)
     # ax.add_patch(circle2)
-
+    if limy:
+        plt.ylim([0, limy])
+    
+    print(f"Plotting {file} with xlim {plt.xlim()} and ylim {plt.ylim()}")
+    
     plt.tight_layout()
     if symm:
         plt.savefig("{}_symm.png".format(file), format="png")
@@ -382,6 +397,8 @@ def plotminpath(min_path_cv1, min_path_cv2, file):
     plt.legend()
     # plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig("{}_minpath.png".format(file), format="png")
+
+
 
 
 def plot_reduced(cv1, cv2, min_path_cv1, min_path_cv2, file):
@@ -468,7 +485,7 @@ def main():
         help="file containining minima values",
         default=None,
     )
-    parser.add_argument("--limy", dest="limy", type=float, help="y MAX value")
+    parser.add_argument("--limy", dest="limy", type=float, help="y MAX value",default=None)
     parser.add_argument("--max", dest="max", type=int, help="z MAX value", default=200)
     parser.add_argument(
         "--symm",
@@ -485,6 +502,20 @@ def main():
         help="tolearnce to find min around point",
         type=float,
         default=0.1,
+    )
+    parser.add_argument(
+        "--ticx",
+        dest="ticx",
+        help="tick size on x axis",
+        type=float,
+        default=None,
+    )
+    parser.add_argument(
+        "--ticy",
+        dest="ticy",
+        help="tick size on y axis",
+        type=float,
+        default=None,
     )
 
     args = parser.parse_args()
@@ -546,6 +577,9 @@ def main():
         minima,
         min_pt,
         args.symm,
+        args.limy,
+        args.ticx,
+        args.ticy,
     )
     plot_horizontal_cbar(cv1, cv2, MAX, free_grid, cmap_active)
     plot3d(cv1, cv2, free_grid, file + ".dat", labx, laby)

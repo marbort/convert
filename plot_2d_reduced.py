@@ -43,6 +43,12 @@ def main():
                         help='set X range',nargs='+',type=float)
     parser.add_argument('--Emax', dest='Emax', 
                         help='set max of E',type=float)
+    parser.add_argument('--loc_legend', dest='loc_legend', 
+                        help='set legend location',type=str,default=None)
+    parser.add_argument('--aspect_ratio', dest='aspect_ratio', 
+                        help='set aspect ratio',type=float,default=1.6)
+    parser.add_argument('--font_size', dest='font_size', 
+                        help='set font size',type=int,default=32)
     
     args = parser.parse_args()
     #pres_colors=["#2b38ff","#f7059b","#17d9ff","#000000","#4cb944"]
@@ -52,10 +58,10 @@ def main():
     data={}
     err_cv1=[]
     lw=4
-    fig=plt.figure(figsize=(16,10),dpi=150)
+    fig=plt.figure(figsize=(10*args.aspect_ratio,10),dpi=150)
     font = {'family' : 'sans',
         'weight' : 'normal',
-        'size'   : 32}
+        'size'   : args.font_size}
     mpl.rc('font', **font)
     mpl.rcParams['axes.linewidth'] = 3
     MIN=0
@@ -101,13 +107,16 @@ def main():
                 plt.fill_between(cv1,min_path_cv1+err,min_path_cv1-err,linewidth=0,alpha=0.1,color=pres_colors[i])
             
                 
-    plt.xlim(args.range[0],args.range[1])  
-    plt.xlabel(args.xlab)
+    plt.xlim(args.range[0],args.range[1]) 
+    plt.xlabel(r"$\mathrm{{{text}}}$".format(text=args.xlab)) 
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.8,2.2])
     plt.ylim([MIN-5,args.limy])
     plt.title(args.title,y=1.05)
-    plt.legend(loc='center left',bbox_to_anchor=(1, 0.5),frameon=False)
+    if args.loc_legend:
+        plt.legend(loc=args.loc_legend,frameon=False)
+    else:
+        plt.legend(loc='center left',bbox_to_anchor=(1, 0.5),frameon=False)
     plt.tight_layout()
     #plt.colorbar(label="Free Energy ($kJ\ mol^{-1})$")
     plt.savefig(args.output,format='png')

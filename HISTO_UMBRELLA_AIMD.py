@@ -16,16 +16,22 @@ def extract_data(input,split,sep,field,restart):
             data[i]['cv'].append(float(line.split()[1]))
         pos=i.split('-')[0].split(sep)[field]
         if restart:
-            cp2k_input=f"cp2k_{pos}_rst.inp"
+            cp2k_input=glob.glob(f"*{pos}*1.restart")[0]
+            with open(cp2k_input,'r') as cpinp:
+                lines=cpinp.readlines()
+                for line in lines:
+                    if 'K ' in line:
+                        kappa=float(line.split()[-1])*2625.5
         else:
             cp2k_input=f"cp2k_{pos}.inp"
-        with open(cp2k_input,'r') as cpinp:
-            lines=cpinp.readlines()
-            for line in lines:
-                if 'K [' in line:
-                    kappa=line.split()[-1]
+            with open(cp2k_input,'r') as cpinp:
+                lines=cpinp.readlines()
+                for line in lines:
+                    if 'K [' in line:
+                        kappa=line.split()[-1]
         data[i]['pos']=float(pos.split('_')[0])
         data[i]['kappa']=float(kappa)
+    
     for i in data:
         bins=100
         hist,edges=np.histogram(data[i]['cv'],bins=bins,density=True)
@@ -57,6 +63,18 @@ CPUS    Actual
                   
     return(data)
 
+"""
+kB_kJ = 0.00831446261815324  
+    T = 310                      
+    beta = 1 / (kB_kJ * T)       
+    kappa = kappa_dict.get(round(mu, 2), default_kappa)  
+    prefactor = np.sqrt(beta * kappa / (2 * np.pi))
+    exponent = -0.5 * beta * kappa * (x - mu) ** 2
+    y = prefactor * np.exp(exponent)
+"""
+
+
+
 def plot_data(data,fac,label,plot_gauss,wd=15,hg=10):
     fig=plt.figure(figsize=(wd,hg),dpi=150)
     font = {'family' : 'sans',
@@ -76,11 +94,12 @@ def plot_data(data,fac,label,plot_gauss,wd=15,hg=10):
         plt.bar([x*fac for x in data[i]['edges']],data[i]['hist'],width=width,alpha=0.3,color="C{}".format(j))
         if plot_gauss:
             #print(gauss_range)
-            plt.plot(gauss_range,gauss,color="C{}".format(j))
+            plt.plot(gauss_range,gauss,color="C{}".format(j),label=data[i]['pos'])
     if label==False:
-        plt.legend([x for x in data],bbox_to_anchor=(-0.5,1),ncols=2)
+        plt.legend(ncols=2)
     plt.xlabel("CV")
     plt.ylabel("Counts")
+    
     plt.tight_layout()
     plt.savefig('histo_all_plot.png',format='png')
 
@@ -98,7 +117,7 @@ def main():
     parser.add_argument('--fac' , dest='fac', help='CV conversion factor',default=1, type=float)
     parser.add_argument('--sep' , dest='sep',type=str,help='file name separator to extract position of restraint. Default -',default='-')
     parser.add_argument('--field' , dest='field',type=int,help='field number where position of restraint is in file name. Default 4.',default=4)
-    parser.add_argument('--restart',action='store_true', default=False,help='take force constant from cp2k_pos_rst')
+    parser.add_argument('--restart',action='store_true', default=False,help='take force constant from cp2k restart file')
     
    
     args = parser.parse_args()

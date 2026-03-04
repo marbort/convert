@@ -27,8 +27,9 @@ def bar_percentages(inputs):
     bars={}
     stds={}
     x_vals=[]
-    structs=["R=Me","R=Et","R=$i$Pr","R=$t$Bu"]
-    titles=["(1,1)","(1,2)","(2,1)","(2,2)"]
+    structs=["R = Me","R = Et","R = $i$-Pr","R = $t$-Bu"]
+    titles=["{1,1}","{1,2}","{2,1}","{2,2}"]
+    #titles=["(1,1)","(1,2)","(2,2)"]
     pres_colors=["#c1272d","#0000a7","#eba938","#008176","#b3b3b3","#4cb944"]
     for input in inputs:
         path=os.path.join(input.rstrip(),"basin_analysis.txt")
@@ -86,9 +87,9 @@ def bar_percentages(inputs):
         print(k)
         plt.title(titles[k])
     plt.subplot(1,4,1)
-    plt.ylabel("Molecule fraction")
+    plt.ylabel("Molecular fraction")
     #plt.subplot(1,len(bars),len(bars))
-    plt.legend()
+    plt.legend(fontsize=56)
     plt.tight_layout()
     plt.savefig('bars.png')
             

@@ -32,7 +32,10 @@ def plot_single(cv,fes,err,file,labx,fig,zmax=100,labels=None,idx=0):
     fig=fig
     plt.plot(cv,fes,label=labels[idx],color=pres_colors[idx],linewidth=3)
     plt.fill_between(cv,fes+err,fes-err,alpha=0.2,color=pres_colors[idx])
-    plt.xlabel(labx)
+    temp_lab=f"\mathrm{{labx}}"
+    
+    
+    plt.xlabel(r"$\mathrm{{{text}}}$".format(text=labx))
     plt.ylabel("Free Energy ($kJ\ mol^{-1})$")
     #plt.xlim([0.5,4.0])
     #plt.ylim([-1.,float(zmax)])
@@ -53,6 +56,7 @@ def main():
     
     parser = argparse.ArgumentParser(description='Plot free energy surface')
     parser.add_argument('--input', type=str, help='Input file',default=None)
+    parser.add_argument('--suffix', type=str, help='Output file suffix',default="")
     parser.add_argument('--paths', type=str, help='File with paths to inputs',default='paths.txt')
     parser.add_argument('--labx', type=str, help='Label for x-axis',default='CV1')
     parser.add_argument('--zmax', type=float, help='Maximum z value',default=100)
@@ -88,7 +92,8 @@ def main():
             if miny < min_fes:
                 min_fes=miny
         plt.ylim([min_fes-5,args.zmax-shift])
-    plt.savefig('fes_single.png',format='png')
+    plt.savefig(f'fes_single{args.suffix}.png',format='png')
+    plt.savefig(f'fes_single{args.suffix}.pdf',format='pdf')
         
         
         

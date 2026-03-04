@@ -92,6 +92,7 @@ def do_wham(parts,start,end,nbins,temp,tol,periodic):
         subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", "sims_equil.txt", "out.dat_all_equil_errors", "25", f"{np.random.randint(0,1000)}"])
         for i in range(parts):
             subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", f"sims_{i}.txt", f"out.dat_all_{i}"])
+            subprocess.run(["/home/marco/WHAM/wham/wham/wham", start, end, nbins, tol, temp, "0", f"sims_block_{i}.txt", f"out.dat_all_block_{i}"])
 
     
     
@@ -107,13 +108,14 @@ def main():
     parser.add_argument('--restart' , dest='restart',action='store_true', default=False, help='Use CP2K restart for restraint parameters',)
     parser.add_argument('--skip' , dest='skip',default=1000, type=int,help='Number of lines to skip from colvar file')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--nbins' , dest='nbins', type=str, default=50,help='N7umber of bins for WHAM')
-    group.add_argument('--binsize' , dest='binsize', type=str, default="0.1",help='Size of the bins for WHAM')
+    group.add_argument('--nbins' , dest='nbins', type=str, default=39,help='Number of bins for WHAM')
+    group.add_argument('--binsize' , dest='binsize', type=str, default=None,help='Size of the bins for WHAM')
     parser.add_argument('--temp' , dest='temp',type=str, default="300",help='Temperature for WHAM')
     parser.add_argument('--fac' , dest='fac',type=float, default=1.89,help='Conversion factor between at in filename and in colvar. Default: 1.89')
     parser.add_argument('--tol' , dest='tol',type=str, default="1e-5",help='Tolerance for WHAM. Default 1e-5')
     parser.add_argument('--periodic' , dest='periodic',type=str, default=None,help='Periodicity of the CV. Default None')
     parser.add_argument('--wham' , dest='wham',action='store_true', default=False, help='Use WHAM range')
+    parser.add_argument('--custom_range' , dest='custom_range',type=float, default=None,nargs=2, help='Use custom range')
     
     args = parser.parse_args()
     
@@ -123,6 +125,10 @@ def main():
     files=[x for x in files_all if "equil" not in x]
     files_extremes=[sorted(files)[0],sorted(files)[-1]]
     minwham,maxwham=calc_min_max(files_extremes[0],files_extremes[1])
+    if args.custom_range is not None:
+        minwham=args.custom_range[0]/args.fac
+        maxwham=args.custom_range[1]/args.fac
+        print(f"Using custom range: {args.custom_range[0]} to {args.custom_range[1]}")
     start=files_extremes[0].split('-')[0].split(f'{args.sep}')[args.pos]
     end=files_extremes[1].split('-')[0].split(f'{args.sep}')[args.pos]
     print(f"Starting from {start} to {end}")
@@ -135,10 +141,11 @@ def main():
             maxwham=float(end)/args.fac
     print(f"Get range from trajectory: {args.wham}")
     print(f"WHAM range: {minwham*args.fac:.2f} to {maxwham*args.fac:.2f}")
-    if args.nbins:
-        nbins=int(args.nbins)
+
     if args.binsize:
         nbins=int((maxwham-minwham)*args.fac/float(args.binsize))
+    else:
+        nbins=int(args.nbins)
     
     for file in files:
         with open(file,'r') as ifile:
@@ -155,6 +162,8 @@ def main():
     for j in range(args.parts):
         files_skipped_split=glob.glob(f'*metadynLog_skipped_{j}')
         files_split=glob.glob(f'*metadynLog_{j}')
+        files_skipped_block=glob.glob(f'*metadynLog_skipped_[0-{j}]')
+       
         for file in files_split:
             #kappa,at=extract_params(file,args.pos,args.sep,args.restart)
             kappa,at=extract_params_restart(file,args.pos,args.sep,j,args.fac)
@@ -174,6 +183,13 @@ def main():
                 ofile.write(f'{file} {at} {kappa} 50 \n')
             with open(f'sims_equil.txt','a') as ofile:
                 ofile.write(f'{file} {at} {kappa} 50 \n')
+        
+        for file in files_skipped_block:
+            k=file.split('_')[-1]
+            kappa,at=extract_params_restart(file,args.pos,args.sep,k,args.fac)
+            with open(f'sims_block_{j}.txt','a') as ofile:
+                ofile.write(f'{file} {at} {kappa} 50 \n')
+            
     do_wham(args.parts,f"{minwham:.3f}",f"{maxwham:.3f}",str(nbins),args.temp,args.tol,args.periodic)
 
 
